@@ -6,87 +6,87 @@
 
 oplists label byte
 	opl	;; void - for instructions without operands
-	opl OP_ALL+OP_AX, OP_ALL+OP_IMM	;; idx=1, ofs=Dh
-	opl OP_ALL+OP_RM, OP_ALL+OP_IMM	;; idx=2, ofs=10h
-	opl OP_1632+OP_RM, OP_IMMS8	;; idx=3, ofs=13h
-	opl OP_ALL+OP_RM, OP_ALL+OP_R	;; idx=4, ofs=16h
-	opl OP_ALL+OP_R, OP_ALL+OP_RM	;; idx=5, ofs=19h
-	opl OP_16+OP_RM, OP_16+OP_R	;; idx=6, ofs=1Ch
-	opl OP_1632+OP_R, OP_1632+OP_M	;; idx=7, ofs=1Fh
-	opl OP_1632+OP_R, OP_1632+OP_RM	;; idx=8, ofs=22h
-	opl OP_32+OP_R_ADD	;; idx=9, ofs=25h
-	opl OP_1632+OP_RM, OP_1632+OP_R	;; idx=10, ofs=27h
-	opl OP_1632+OP_RM, OP_IMM8	;; idx=11, ofs=2Ah
-	opl OP_REL1632	;; idx=12, ofs=2Dh
-	opl OP_FARIMM	;; idx=13, ofs=2Fh
-	opl OP_FARMEM	;; idx=14, ofs=31h
-	opl OP_M64	;; idx=15, ofs=33h
-	opl OP_ALL+OP_RM	;; idx=16, ofs=35h
-	opl OP_1632+OP_R_ADD	;; idx=17, ofs=37h
-	opl OP_16+OP_IMM, OP_IMM8	;; idx=18, ofs=39h
-	opl OP_MFLOAT	;; idx=19, ofs=3Ch
-	opl OP_MDOUBLE	;; idx=20, ofs=3Eh
-	opl OP_ST, OP_STI	;; idx=21, ofs=40h
-	opl OP_STI, OP_ST	;; idx=22, ofs=43h
-	opl OP_1CHK, OP_STI, OP_ST	;; idx=23, ofs=46h
-	opl OP_32+OP_M	;; idx=24, ofs=4Ah
-	opl OP_16+OP_M	;; idx=25, ofs=4Ch
-	opl OP_M80	;; idx=26, ofs=4Eh
-	opl OP_STI	;; idx=27, ofs=50h
-	opl OP_1CHK, OP_STI	;; idx=28, ofs=52h
-	opl OP_MXX	;; idx=29, ofs=55h
-	opl OP_16+OP_AX	;; idx=30, ofs=57h
-	opl OP_1632+OP_R, OP_1632+OP_RM, OP_IMMS8	;; idx=31, ofs=59h
-	opl OP_1632+OP_R_MOD, OP_1632+OP_R, OP_IMMS8	;; idx=32, ofs=5Dh
-	opl OP_1632+OP_R, OP_1632+OP_RM, OP_1632+OP_IMM	;; idx=33, ofs=61h
-	opl OP_1632+OP_R_MOD, OP_1632+OP_R, OP_1632+OP_IMM	;; idx=34, ofs=65h
-	opl OP_ALL+OP_AX, OP_IMM8	;; idx=35, ofs=69h
-	opl OP_ALL+OP_AX, OP_DX	;; idx=36, ofs=6Ch
-	opl OP_3	;; idx=37, ofs=6Fh
-	opl OP_IMM8	;; idx=38, ofs=71h
-	opl OP_REL8	;; idx=39, ofs=73h
-	opl OP_1632+OP_RM	;; idx=40, ofs=75h
-	opl OP_16+OP_RM	;; idx=41, ofs=77h
-	opl OP_1632+OP_RM, OP_SEGREG	;; idx=42, ofs=79h
-	opl OP_SEGREG, OP_1632+OP_RM	;; idx=43, ofs=7Ch
-	opl OP_ALL+OP_AX, OP_ALL+OP_MOFFS	;; idx=44, ofs=7Fh
-	opl OP_ALL+OP_MOFFS, OP_ALL+OP_AX	;; idx=45, ofs=82h
-	opl OP_8+OP_R_ADD, OP_8+OP_IMM	;; idx=46, ofs=85h
-	opl OP_1632+OP_R_ADD, OP_1632+OP_IMM	;; idx=47, ofs=88h
-	opl OP_1632+OP_R, OP_SHOSIZ, OP_8+OP_RM	;; idx=48, ofs=8Bh
-	opl OP_1632+OP_R, OP_SHOSIZ, OP_16+OP_RM	;; idx=49, ofs=8Fh
-	opl OP_IMM8, OP_ALL+OP_AX	;; idx=50, ofs=93h
-	opl OP_DX, OP_ALL+OP_AX	;; idx=51, ofs=96h
-	opl OP_1632+OP_M	;; idx=52, ofs=99h
-;	opl OP_SHOSIZ, OP_1632+OP_IMM	;; idx=53, ofs=9Bh
-	opl OP_1632+OP_IMM	;; idx=53, ofs=9Bh
-	opl OP_SHOSIZ, OP_IMMS8	;; idx=54, ofs=9Eh
-	opl OP_ALL+OP_RM, OP_1	;; idx=55, ofs=A1h
-	opl OP_ALL+OP_RM, OP_CL	;; idx=56, ofs=A4h
-	opl OP_ALL+OP_RM, OP_IMM8	;; idx=57, ofs=A7h
-	opl OP_16+OP_IMM	;; idx=58, ofs=AAh
-	opl OP_8+OP_RM	;; idx=59, ofs=ACh
-	opl OP_1632+OP_RM, OP_1632+OP_R, OP_IMM8	;; idx=60, ofs=AEh
-	opl OP_1632+OP_RM, OP_1632+OP_R, OP_CL	;; idx=61, ofs=B2h
-	opl OP_1632+OP_AX, OP_1632+OP_R_ADD	;; idx=62, ofs=B6h
-	opl OP_1632+OP_R_ADD, OP_1632+OP_AX	;; idx=63, ofs=B9h
-	opl OP_ES	;; idx=64, ofs=BCh
-	opl OP_CS	;; idx=65, ofs=BEh
-	opl OP_SS	;; idx=66, ofs=C0h
-	opl OP_DS	;; idx=67, ofs=C2h
-	opl OP_FS	;; idx=68, ofs=C4h
-	opl OP_GS	;; idx=69, ofs=C6h
-	opl OP_32+OP_R_MOD, OP_CR	;; idx=70, ofs=C8h
-	opl OP_CR, OP_32+OP_R_MOD	;; idx=71, ofs=CBh
-	opl OP_32+OP_R_MOD, OP_DR	;; idx=72, ofs=CEh
-	opl OP_DR, OP_32+OP_R_MOD	;; idx=73, ofs=D1h
-	opl OP_32+OP_R_MOD, OP_TR	;; idx=74, ofs=D4h
-	opl OP_TR, OP_32+OP_R_MOD	;; idx=75, ofs=D7h
+	opl OpX+_Ax, OpX+_Ix	;; idx=01, ofs=00dh
+	opl OpX+_Ex, OpX+_Ix	;; idx=02, ofs=010h
+	opl OpV+_Ex, _Ds	;; idx=03, ofs=013h
+	opl OpX+_Ex, OpX+_Rx	;; idx=04, ofs=016h
+	opl OpX+_Rx, OpX+_Ex	;; idx=05, ofs=019h
+	opl OpW+_Ex, OpW+_Rx	;; idx=06, ofs=01ch
+	opl OpV+_Rx, OpV+_Mx	;; idx=07, ofs=01fh
+	opl OpV+_Rx, OpV+_Ex	;; idx=08, ofs=022h
+	opl OpD+_rx	;; idx=09, ofs=025h
+	opl OpV+_Ex, OpV+_Rx	;; idx=10, ofs=027h
+	opl OpV+_Ex, _Db	;; idx=11, ofs=02ah
+	opl _Jv	;; idx=12, ofs=02dh
+	opl _Af	;; idx=13, ofs=02fh
+	opl _Mf	;; idx=14, ofs=031h
+	opl _Q	;; idx=15, ofs=033h
+	opl OpX+_Ex	;; idx=16, ofs=035h
+	opl OpV+_rx	;; idx=17, ofs=037h
+	opl OpW+_Ix, _Db	;; idx=18, ofs=039h
+	opl _MF	;; idx=19, ofs=03ch
+	opl _MD	;; idx=20, ofs=03eh
+	opl _ST, _STi	;; idx=21, ofs=040h
+	opl _STi, _ST	;; idx=22, ofs=043h
+	opl _ST1, _STi, _ST	;; idx=23, ofs=046h
+	opl OpD+_Mx	;; idx=24, ofs=04ah
+	opl OpW+_Mx	;; idx=25, ofs=04ch
+	opl _MLD	;; idx=26, ofs=04eh
+	opl _STi	;; idx=27, ofs=050h
+	opl _ST1, _STi	;; idx=28, ofs=052h
+	opl _Mxx	;; idx=29, ofs=055h
+	opl OpW+_Ax	;; idx=30, ofs=057h
+	opl OpV+_Rx, OpV+_Ex, _Ds	;; idx=31, ofs=059h
+	opl OpV+_Xx, OpV+_Rx, _Ds	;; idx=32, ofs=05dh
+	opl OpV+_Rx, OpV+_Ex, OpV+_Ix	;; idx=33, ofs=061h
+	opl OpV+_Xx, OpV+_Rx, OpV+_Ix	;; idx=34, ofs=065h
+	opl OpX+_Ax, _Db	;; idx=35, ofs=069h
+	opl OpX+_Ax, _DX	;; idx=36, ofs=06ch
+	opl _3	;; idx=37, ofs=06fh
+	opl _Db	;; idx=38, ofs=071h
+	opl _Jb	;; idx=39, ofs=073h
+	opl OpV+_Ex	;; idx=40, ofs=075h
+	opl OpW+_Ex	;; idx=41, ofs=077h
+	opl OpV+_Ex, _Rs	;; idx=42, ofs=079h
+	opl _Rs, OpV+_Ex	;; idx=43, ofs=07ch
+	opl OpX+_Ax, OpX+_Ox	;; idx=44, ofs=07fh
+	opl OpX+_Ox, OpX+_Ax	;; idx=45, ofs=082h
+	opl OpB+_rx, OpB+_Ix	;; idx=46, ofs=085h
+	opl OpV+_rx, OpV+_Ix	;; idx=47, ofs=088h
+	opl OpV+_Rx, _N, OpB+_Ex	;; idx=48, ofs=08bh
+	opl OpV+_Rx, _N, OpW+_Ex	;; idx=49, ofs=08fh
+	opl _Db, OpX+_Ax	;; idx=50, ofs=093h
+	opl _DX, OpX+_Ax	;; idx=51, ofs=096h
+	opl OpV+_Mx	;; idx=52, ofs=099h
+;	opl _N, OpV+_Ix	;; idx=53, ofs=09bh
+	opl OpV+_Ix	;; idx=53, ofs=09bh
+	opl _N, _Ds	;; idx=54, ofs=09eh
+	opl OpX+_Ex, _1	;; idx=55, ofs=0a1h
+	opl OpX+_Ex, _CL	;; idx=56, ofs=0a4h
+	opl OpX+_Ex, _Db	;; idx=57, ofs=0a7h
+	opl OpW+_Ix	;; idx=58, ofs=0aah
+	opl OpB+_Ex	;; idx=59, ofs=0ach
+	opl OpV+_Ex, OpV+_Rx, _Db	;; idx=60, ofs=0aeh
+	opl OpV+_Ex, OpV+_Rx, _CL	;; idx=61, ofs=0b2h
+	opl OpV+_Ax, OpV+_rx	;; idx=62, ofs=0b6h
+	opl OpV+_rx, OpV+_Ax	;; idx=63, ofs=0b9h
+	opl _ES	;; idx=64, ofs=0bch
+	opl _CS	;; idx=65, ofs=0beh
+	opl _SS	;; idx=66, ofs=0c0h
+	opl _DS	;; idx=67, ofs=0c2h
+	opl _FS	;; idx=68, ofs=0c4h
+	opl _GS	;; idx=69, ofs=0c6h
+	opl OpD+_Xx, _CRx	;; idx=70, ofs=0c8h
+	opl _CRx, OpD+_Xx	;; idx=71, ofs=0cbh
+	opl OpD+_Xx, _DRx	;; idx=72, ofs=0ceh
+	opl _DRx, OpD+_Xx	;; idx=73, ofs=0d1h
+	opl OpD+_Xx, _TRx	;; idx=74, ofs=0d4h
+	opl _TRx, OpD+_Xx	;; idx=75, ofs=0d7h
 if MMXSUPP
-	opl OP_MMX, OP_32+OP_RM	;; idx=76, ofs=DAh
-	opl OP_32+OP_RM, OP_MMX	;; idx=77, ofs=DDh
-	opl OP_MMX, OP_64+OP_RM	;; idx=78, ofs=E0h
-	opl OP_64+OP_RM, OP_MMX	;; idx=79, ofs=E3h
+	opl _MMx, OpD+_Ex	;; idx=76, ofs=0dah
+	opl OpD+_Ex, _MMx	;; idx=77, ofs=0ddh
+	opl _MMx, OpQ+_Ex	;; idx=78, ofs=0e0h
+	opl OpQ+_Ex, _MMx	;; idx=79, ofs=0e3h
 endif
 
 ASMMOD	EQU opidx
@@ -97,18 +97,18 @@ ASMMOD	EQU opidx
 agroups label word
 	dw 083h	;; 0
 	dw 080h	;; 1
-	dw 1BAh	;; 2
-	dw 0FFh	;; 3
-	dw 1C7h	;; 4
-	dw 0FEh	;; 5
-	dw 0F6h	;; 6
+	dw 1bah	;; 2
+	dw 0ffh	;; 3
+	dw 1c7h	;; 4
+	dw 0feh	;; 5
+	dw 0f6h	;; 6
 	dw 101h	;; 7
 	dw 100h	;; 8
-	dw 0C6h	;; 9
-	dw 08Fh	;; 10
-	dw 0D0h	;; 11
-	dw 0D2h	;; 12
-	dw 0C0h	;; 13
+	dw 0c6h	;; 9
+	dw 08fh	;; 10
+	dw 0d0h	;; 11
+	dw 0d2h	;; 12
+	dw 0c0h	;; 13
 
 ;; --- List of assembler mnemonics and data.
 ;; --- variant's 1. argument (=a):
@@ -119,180 +119,180 @@ agroups label word
 ;; --- variant's 2. argument is index into array opindex.
 
 mnlist label byte
-	mne AAA	;; ofs=0h
+	mne AAA	;; ofs=000h
 	 variant 037h, 0
 	 endvariant
-	mne AAD, ASM_AAX	;; ofs=3h
+	mne AAD, ASM_AAX	;; ofs=003h
 	 variant 0d5h, 38
 	 endvariant
-	mne AAM, ASM_AAX	;; ofs=7h
+	mne AAM, ASM_AAX	;; ofs=007h
 	 variant 0d4h, 38
 	 endvariant
-	mne AAS	;; ofs=Bh
+	mne AAS	;; ofs=00bh
 	 variant 03fh, 0
 	 endvariant
-	mne ADC	;; ofs=Eh
+	mne ADC	;; ofs=00eh
 	 variant AGRP(0,2), 3, ASM_LOCKABLE
 	 variant 014h, 1
 	 variant AGRP(1,2), 2, ASM_LOCKABLE
 	 variant 010h, 4, ASM_LOCKABLE
 	 variant 012h, 5
 	 endvariant
-	mne ADD	;; ofs=1Ch
+	mne ADD	;; ofs=01ch
 	 variant AGRP(0,0), 3, ASM_LOCKABLE
 	 variant 004h, 1
 	 variant AGRP(1,0), 2, ASM_LOCKABLE
 	 variant 000h, 4, ASM_LOCKABLE
 	 variant 002h, 5
 	 endvariant
-	mne AND	;; ofs=2Ah
+	mne AND	;; ofs=02ah
 	 variant AGRP(0,4), 3, ASM_LOCKABLE
 	 variant 024h, 1
 	 variant AGRP(1,4), 2, ASM_LOCKABLE
 	 variant 020h, 4, ASM_LOCKABLE
 	 variant 022h, 5
 	 endvariant
-	mne ARPL	;; ofs=38h
+	mne ARPL	;; ofs=038h
 	 variant 063h, 6, , ASM_MACH2
 	 endvariant
-	mne BOUND	;; ofs=3Ch
+	mne BOUND	;; ofs=03ch
 	 variant 062h, 7, , ASM_MACH1
 	 endvariant
-	mne BSF	;; ofs=40h
+	mne BSF	;; ofs=040h
 	 variant 1bch, 8, , ASM_MACH3
 	 endvariant
-	mne BSR	;; ofs=44h
+	mne BSR	;; ofs=044h
 	 variant 1bdh, 8, , ASM_MACH3
 	 endvariant
-	mne BSWAP, ASM_D32	;; ofs=48h
+	mne BSWAP, ASM_D32	;; ofs=048h
 	 variant 1c8h, 9, , ASM_MACH4
 	 endvariant
-	mne BT	;; ofs=4Dh
+	mne BT	;; ofs=04dh
 	 variant 1a3h, 10, , ASM_MACH3
 	 variant AGRP(2,4), 11, , ASM_MACH3
 	 endvariant
-	mne BTC	;; ofs=54h
+	mne BTC	;; ofs=054h
 	 variant 1bbh, 10, ASM_LOCKABLE, ASM_MACH3
 	 variant AGRP(2,7), 11, ASM_LOCKABLE, ASM_MACH3
 	 endvariant
-	mne BTR	;; ofs=5Dh
+	mne BTR	;; ofs=05dh
 	 variant 1b3h, 10, ASM_LOCKABLE, ASM_MACH3
 	 variant AGRP(2,6), 11, ASM_LOCKABLE, ASM_MACH3
 	 endvariant
-	mne BTS	;; ofs=66h
+	mne BTS	;; ofs=066h
 	 variant 1abh, 10, ASM_LOCKABLE, ASM_MACH3
 	 variant AGRP(2,5), 11, ASM_LOCKABLE, ASM_MACH3
 	 endvariant
-	mne CALL	;; ofs=6Fh
+	mne CALL	;; ofs=06fh
 	 variant 0e8h, 12
 	 variant AGRP(3,2), 40
 	 variant AGRP(3,3), 14
 	 variant 09ah, 13
 	 endvariant
-	mne CBW, ASM_D16	;; ofs=78h
-	mne CWDE, ASM_D32	;; ofs=79h
+	mne CBW, ASM_D16	;; ofs=078h
+	mne CWDE, ASM_D32	;; ofs=079h
 	 variant 098h, 0
 	 endvariant
-	mne CLC	;; ofs=7Dh
+	mne CLC	;; ofs=07dh
 	 variant 0f8h, 0
 	 endvariant
-	mne CLD	;; ofs=80h
+	mne CLD	;; ofs=080h
 	 variant 0fch, 0
 	 endvariant
-	mne CLI	;; ofs=83h
+	mne CLI	;; ofs=083h
 	 variant 0fah, 0
 	 endvariant
-	mne CLTS	;; ofs=86h
+	mne CLTS	;; ofs=086h
 	 variant 106h, 0, , ASM_MACH2
 	 endvariant
-	mne CMC	;; ofs=8Ah
+	mne CMC	;; ofs=08ah
 	 variant 0f5h, 0
 	 endvariant
-	mne CMOVA	;; ofs=8Dh
+	mne CMOVA	;; ofs=08dh
 	 variant 147h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVAE	;; ofs=91h
+	mne CMOVAE	;; ofs=091h
 	 variant 143h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVB	;; ofs=95h
+	mne CMOVB	;; ofs=095h
 	 variant 142h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVBE	;; ofs=99h
+	mne CMOVBE	;; ofs=099h
 	 variant 146h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVC	;; ofs=9Dh
+	mne CMOVC	;; ofs=09dh
 	 variant 142h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVE	;; ofs=A1h
+	mne CMOVE	;; ofs=0a1h
 	 variant 144h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVG	;; ofs=A5h
+	mne CMOVG	;; ofs=0a5h
 	 variant 14fh, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVGE	;; ofs=A9h
+	mne CMOVGE	;; ofs=0a9h
 	 variant 14dh, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVL	;; ofs=ADh
+	mne CMOVL	;; ofs=0adh
 	 variant 14ch, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVLE	;; ofs=B1h
+	mne CMOVLE	;; ofs=0b1h
 	 variant 14eh, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNA	;; ofs=B5h
+	mne CMOVNA	;; ofs=0b5h
 	 variant 146h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNAE	;; ofs=B9h
+	mne CMOVNAE	;; ofs=0b9h
 	 variant 142h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNB	;; ofs=BDh
+	mne CMOVNB	;; ofs=0bdh
 	 variant 143h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNBE	;; ofs=C1h
+	mne CMOVNBE	;; ofs=0c1h
 	 variant 147h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNC	;; ofs=C5h
+	mne CMOVNC	;; ofs=0c5h
 	 variant 143h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNE	;; ofs=C9h
+	mne CMOVNE	;; ofs=0c9h
 	 variant 145h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNG	;; ofs=CDh
+	mne CMOVNG	;; ofs=0cdh
 	 variant 14eh, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNGE	;; ofs=D1h
+	mne CMOVNGE	;; ofs=0d1h
 	 variant 14ch, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNL	;; ofs=D5h
+	mne CMOVNL	;; ofs=0d5h
 	 variant 14dh, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNLE	;; ofs=D9h
+	mne CMOVNLE	;; ofs=0d9h
 	 variant 14fh, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNO	;; ofs=DDh
+	mne CMOVNO	;; ofs=0ddh
 	 variant 141h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNP	;; ofs=E1h
+	mne CMOVNP	;; ofs=0e1h
 	 variant 14bh, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNS	;; ofs=E5h
+	mne CMOVNS	;; ofs=0e5h
 	 variant 149h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVNZ	;; ofs=E9h
+	mne CMOVNZ	;; ofs=0e9h
 	 variant 145h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVO	;; ofs=EDh
+	mne CMOVO	;; ofs=0edh
 	 variant 140h, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVP	;; ofs=F1h
+	mne CMOVP	;; ofs=0f1h
 	 variant 14ah, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVPE	;; ofs=F5h
+	mne CMOVPE	;; ofs=0f5h
 	 variant 14ah, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVPO	;; ofs=F9h
+	mne CMOVPO	;; ofs=0f9h
 	 variant 14bh, 8, , ASM_MACH6
 	 endvariant
-	mne CMOVS	;; ofs=FDh
+	mne CMOVS	;; ofs=0fdh
 	 variant 148h, 8, , ASM_MACH6
 	 endvariant
 	mne CMOVZ	;; ofs=101h
@@ -315,7 +315,7 @@ mnlist label byte
 	mne CMPXCHG	;; ofs=118h
 	 variant 1b0h, 4, ASM_LOCKABLE, ASM_MACH4
 	 endvariant
-	mne CMPXCHG8B	;; ofs=11Dh
+	mne CMPXCHG8B	;; ofs=11dh
 	 variant AGRP(4,1), 15, , ASM_MACH5
 	 endvariant
 	mne CPUID	;; ofs=121h
@@ -325,10 +325,10 @@ mnlist label byte
 	mne CDQ, ASM_D32	;; ofs=126h
 	 variant 099h, 0
 	 endvariant
-	mne DAA	;; ofs=12Ah
+	mne DAA	;; ofs=12ah
 	 variant 027h, 0
 	 endvariant
-	mne DAS	;; ofs=12Dh
+	mne DAS	;; ofs=12dh
 	 variant 02fh, 0
 	 endvariant
 	mne DB, ASM_DB	;; ofs=130h
@@ -337,12 +337,12 @@ mnlist label byte
 	 variant 048h, 17
 	 variant AGRP(5,1), 16, ASM_LOCKABLE
 	 endvariant
-	mne DIV	;; ofs=13Ah
+	mne DIV	;; ofs=13ah
 	 variant AGRP(6,6), 16
 	 endvariant
-	mne DW, ASM_DW	;; ofs=13Dh
+	mne DW, ASM_DW	;; ofs=13dh
 if MMXSUPP
-	mne EMMS	;; ofs=13Fh
+	mne EMMS	;; ofs=13fh
 	 variant 177h, 0, , ASM_MACH5
 	 endvariant
 endif
@@ -352,16 +352,16 @@ endif
 	mne F2XM1	;; ofs=147h
 	 fpvariant 0d9h, 0, 0f0h
 	 endvariant
-	mne FABS	;; ofs=14Bh
+	mne FABS	;; ofs=14bh
 	 fpvariant 0d9h, 0, 0e1h
 	 endvariant
-	mne FADD	;; ofs=14Fh
+	mne FADD	;; ofs=14fh
 	 variant 200h, 19
 	 variant 204h, 20
 	 fpvariant 0d8h, 21, 0c0h
 	 fpvariant 0dch, 22, 0c0h
 	 endvariant
-	mne FADDP	;; ofs=15Ah
+	mne FADDP	;; ofs=15ah
 	 fpvariant 0deh, 23, 0c0h
 	 fpvariant 0deh, 0, 0c1h
 	 endvariant
@@ -375,7 +375,7 @@ endif
 	mne FBSTP	;; ofs=169h
 	 variant 237h, 26
 	 endvariant
-	mne FCHS	;; ofs=16Ch
+	mne FCHS	;; ofs=16ch
 	 fpvariant 0d9h, 0, 0e0h
 	 endvariant
 	mne FCLEX, ASM_WAIT	;; ofs=170h
@@ -385,10 +385,10 @@ endif
 	mne FCMOVA	;; ofs=175h
 	 fpvariant 0dbh, 21, 0d0h, , ASM_MACH6
 	 endvariant
-	mne FCMOVAE	;; ofs=17Ah
+	mne FCMOVAE	;; ofs=17ah
 	 fpvariant 0dbh, 21, 0c0h, , ASM_MACH6
 	 endvariant
-	mne FCMOVB	;; ofs=17Fh
+	mne FCMOVB	;; ofs=17fh
 	 fpvariant 0dah, 21, 0c0h, , ASM_MACH6
 	 endvariant
 	mne FCMOVBE	;; ofs=184h
@@ -397,7 +397,7 @@ endif
 	mne FCMOVE	;; ofs=189h
 	 fpvariant 0dah, 21, 0c8h, , ASM_MACH6
 	 endvariant
-	mne FCMOVNA	;; ofs=18Eh
+	mne FCMOVNA	;; ofs=18eh
 	 fpvariant 0dah, 21, 0d0h, , ASM_MACH6
 	 endvariant
 	mne FCMOVNAE	;; ofs=193h
@@ -406,58 +406,58 @@ endif
 	mne FCMOVNB	;; ofs=198h
 	 fpvariant 0dbh, 21, 0c0h, , ASM_MACH6
 	 endvariant
-	mne FCMOVNBE	;; ofs=19Dh
+	mne FCMOVNBE	;; ofs=19dh
 	 fpvariant 0dbh, 21, 0d0h, , ASM_MACH6
 	 endvariant
-	mne FCMOVNE	;; ofs=1A2h
+	mne FCMOVNE	;; ofs=1a2h
 	 fpvariant 0dbh, 21, 0c8h, , ASM_MACH6
 	 endvariant
-	mne FCMOVNU	;; ofs=1A7h
+	mne FCMOVNU	;; ofs=1a7h
 	 fpvariant 0dbh, 21, 0d8h, , ASM_MACH6
 	 endvariant
-	mne FCMOVNZ	;; ofs=1ACh
+	mne FCMOVNZ	;; ofs=1ach
 	 fpvariant 0dbh, 21, 0c8h, , ASM_MACH6
 	 endvariant
-	mne FCMOVU	;; ofs=1B1h
+	mne FCMOVU	;; ofs=1b1h
 	 fpvariant 0dah, 21, 0d8h, , ASM_MACH6
 	 endvariant
-	mne FCMOVZ	;; ofs=1B6h
+	mne FCMOVZ	;; ofs=1b6h
 	 fpvariant 0dah, 21, 0c8h, , ASM_MACH6
 	 endvariant
-	mne FCOM	;; ofs=1BBh
+	mne FCOM	;; ofs=1bbh
 	 variant 210h, 19
 	 variant 214h, 20
 	 fpvariant 0d8h, 28, 0d0h
 	 fpvariant 0d8h, 0, 0d1h
 	 endvariant
-	mne FCOMI	;; ofs=1C6h
+	mne FCOMI	;; ofs=1c6h
 	 fpvariant 0dbh, 28, 0f0h, , ASM_MACH6
 	 fpvariant 0dbh, 0, 0f1h, , ASM_MACH6
 	 endvariant
-	mne FCOMIP	;; ofs=1CFh
+	mne FCOMIP	;; ofs=1cfh
 	 fpvariant 0dfh, 28, 0f0h, , ASM_MACH6
 	 fpvariant 0dfh, 0, 0f1h, , ASM_MACH6
 	 endvariant
-	mne FCOMP	;; ofs=1D8h
+	mne FCOMP	;; ofs=1d8h
 	 variant 218h, 19
 	 variant 21ch, 20
 	 fpvariant 0d8h, 28, 0d8h
 	 fpvariant 0d8h, 0, 0d9h
 	 endvariant
-	mne FCOMPP	;; ofs=1E3h
+	mne FCOMPP	;; ofs=1e3h
 	 fpvariant 0deh, 0, 0d9h
 	 endvariant
-	mne FCOS	;; ofs=1E7h
+	mne FCOS	;; ofs=1e7h
 	 fpvariant 0d9h, 0, 0ffh, , ASM_MACH3
 	 endvariant
-	mne FDECSTP	;; ofs=1ECh
+	mne FDECSTP	;; ofs=1ech
 	 fpvariant 0d9h, 0, 0f6h
 	 endvariant
-	mne FDISI, ASM_WAIT	;; ofs=1F0h
-	mne FNDISI	;; ofs=1F1h
+	mne FDISI, ASM_WAIT	;; ofs=1f0h
+	mne FNDISI	;; ofs=1f1h
 	 fpvariant 0dbh, 0, 0e1h
 	 endvariant
-	mne FDIV	;; ofs=1F5h
+	mne FDIV	;; ofs=1f5h
 	 variant 230h, 19
 	 variant 234h, 20
 	 fpvariant 0d8h, 21, 0f0h
@@ -471,7 +471,7 @@ endif
 	 variant 232h, 24
 	 variant 236h, 25
 	 endvariant
-	mne FDIVR	;; ofs=20Ch
+	mne FDIVR	;; ofs=20ch
 	 variant 238h, 19
 	 variant 23ch, 20
 	 fpvariant 0d8h, 21, 0f8h
@@ -481,7 +481,7 @@ endif
 	 fpvariant 0deh, 23, 0f0h
 	 fpvariant 0deh, 0, 0f1h
 	 endvariant
-	mne FIDIVR	;; ofs=21Eh
+	mne FIDIVR	;; ofs=21eh
 	 variant 23ah, 24
 	 variant 23eh, 25
 	 endvariant
@@ -492,7 +492,7 @@ endif
 	mne FFREE	;; ofs=228h
 	 fpvariant 0ddh, 27, 0c0h
 	 endvariant
-	mne FICOM	;; ofs=22Ch
+	mne FICOM	;; ofs=22ch
 	 variant 212h, 24
 	 variant 216h, 25
 	 endvariant
@@ -505,7 +505,7 @@ endif
 	 variant 207h, 25
 	 variant 22fh, 15
 	 endvariant
-	mne FINCSTP	;; ofs=23Dh
+	mne FINCSTP	;; ofs=23dh
 	 fpvariant 0d9h, 0, 0f7h
 	 endvariant
 	mne FINIT, ASM_WAIT	;; ofs=241h
@@ -516,7 +516,7 @@ endif
 	 variant 213h, 24
 	 variant 217h, 25
 	 endvariant
-	mne FISTP	;; ofs=24Bh
+	mne FISTP	;; ofs=24bh
 	 variant 21bh, 24
 	 variant 21fh, 25
 	 variant 23fh, 15
@@ -527,7 +527,7 @@ endif
 	 variant 22bh, 26
 	 fpvariant 0d9h, 27, 0c0h
 	 endvariant
-	mne FLD1	;; ofs=25Ch
+	mne FLD1	;; ofs=25ch
 	 fpvariant 0d9h, 0, 0e8h
 	 endvariant
 	mne FLDL2T	;; ofs=260h
@@ -539,7 +539,7 @@ endif
 	mne FLDPI	;; ofs=268h
 	 fpvariant 0d9h, 0, 0ebh
 	 endvariant
-	mne FLDLG2	;; ofs=26Ch
+	mne FLDLG2	;; ofs=26ch
 	 fpvariant 0d9h, 0, 0ech
 	 endvariant
 	mne FLDLN2	;; ofs=270h
@@ -552,10 +552,10 @@ endif
 	mne FNLDCW	;; ofs=279h
 	 variant 229h, 25
 	 endvariant
-	mne FLDENV	;; ofs=27Ch
+	mne FLDENV	;; ofs=27ch
 	 variant 221h, 29
 	 endvariant
-	mne FLDENVW, ASM_D16	;; ofs=27Fh
+	mne FLDENVW, ASM_D16	;; ofs=27fh
 	mne FLDENVD, ASM_D32	;; ofs=280h
 	 variant 221h, 29
 	 endvariant
@@ -565,7 +565,7 @@ endif
 	 fpvariant 0d8h, 21, 0c8h
 	 fpvariant 0dch, 22, 0c8h
 	 endvariant
-	mne FMULP	;; ofs=28Fh
+	mne FMULP	;; ofs=28fh
 	 fpvariant 0deh, 23, 0c8h
 	 fpvariant 0deh, 0, 0c9h
 	 endvariant
@@ -573,80 +573,80 @@ endif
 	 variant 20ah, 24
 	 variant 20eh, 25
 	 endvariant
-	mne FNOP	;; ofs=29Bh
+	mne FNOP	;; ofs=29bh
 	 fpvariant 0d9h, 0, 0d0h
 	 endvariant
-	mne FPATAN	;; ofs=29Fh
+	mne FPATAN	;; ofs=29fh
 	 fpvariant 0d9h, 0, 0f3h
 	 endvariant
-	mne FPREM	;; ofs=2A3h
+	mne FPREM	;; ofs=2a3h
 	 fpvariant 0d9h, 0, 0f8h
 	 endvariant
-	mne FPREM1	;; ofs=2A7h
+	mne FPREM1	;; ofs=2a7h
 	 fpvariant 0d9h, 0, 0f5h, , ASM_MACH3
 	 endvariant
-	mne FPTAN	;; ofs=2ACh
+	mne FPTAN	;; ofs=2ach
 	 fpvariant 0d9h, 0, 0f2h
 	 endvariant
-	mne FRNDINT	;; ofs=2B0h
+	mne FRNDINT	;; ofs=2b0h
 	 fpvariant 0d9h, 0, 0fch
 	 endvariant
-	mne FRSTOR	;; ofs=2B4h
+	mne FRSTOR	;; ofs=2b4h
 	 variant 225h, 29
 	 endvariant
-	mne FRSTORW, ASM_D16	;; ofs=2B7h
-	mne FRSTORD, ASM_D32	;; ofs=2B8h
+	mne FRSTORW, ASM_D16	;; ofs=2b7h
+	mne FRSTORD, ASM_D32	;; ofs=2b8h
 	 variant 225h, 29
 	 endvariant
-	mne FSAVE, ASM_WAIT	;; ofs=2BCh
-	mne FNSAVE	;; ofs=2BDh
+	mne FSAVE, ASM_WAIT	;; ofs=2bch
+	mne FNSAVE	;; ofs=2bdh
 	 variant 235h, 29
 	 endvariant
-	mne FSAVEW, ASM_D16	;; ofs=2C0h
-	mne FSAVED, ASM_D32	;; ofs=2C1h
+	mne FSAVEW, ASM_D16	;; ofs=2c0h
+	mne FSAVED, ASM_D32	;; ofs=2c1h
 	 variant 235h, 29
 	 endvariant
-	mne FSCALE	;; ofs=2C5h
+	mne FSCALE	;; ofs=2c5h
 	 fpvariant 0d9h, 0, 0fdh
 	 endvariant
-	mne FSETPM, ASM_WAIT	;; ofs=2C9h
-	mne FNSETPM	;; ofs=2CAh
+	mne FSETPM, ASM_WAIT	;; ofs=2c9h
+	mne FNSETPM	;; ofs=2cah
 	 fpvariant 0dbh, 0, 0e4h, , ASM_MACH2
 	 endvariant
-	mne FSIN	;; ofs=2CFh
+	mne FSIN	;; ofs=2cfh
 	 fpvariant 0d9h, 0, 0feh, , ASM_MACH3
 	 endvariant
-	mne FSINCOS	;; ofs=2D4h
+	mne FSINCOS	;; ofs=2d4h
 	 fpvariant 0d9h, 0, 0fbh, , ASM_MACH3
 	 endvariant
-	mne FSQRT	;; ofs=2D9h
+	mne FSQRT	;; ofs=2d9h
 	 fpvariant 0d9h, 0, 0fah
 	 endvariant
-	mne FST	;; ofs=2DDh
+	mne FST	;; ofs=2ddh
 	 variant 211h, 19
 	 variant 215h, 20
 	 fpvariant 0ddh, 27, 0d0h
 	 endvariant
-	mne FSTP	;; ofs=2E5h
+	mne FSTP	;; ofs=2e5h
 	 variant 219h, 19
 	 variant 21dh, 20
 	 variant 23bh, 26
 	 fpvariant 0ddh, 27, 0d8h
 	 endvariant
-	mne FSTCW, ASM_WAIT	;; ofs=2EFh
-	mne FNSTCW	;; ofs=2F0h
+	mne FSTCW, ASM_WAIT	;; ofs=2efh
+	mne FNSTCW	;; ofs=2f0h
 	 variant 239h, 25
 	 endvariant
-	mne FSTENV, ASM_WAIT	;; ofs=2F3h
-	mne FNSTENV	;; ofs=2F4h
+	mne FSTENV, ASM_WAIT	;; ofs=2f3h
+	mne FNSTENV	;; ofs=2f4h
 	 variant 231h, 29
 	 endvariant
-	mne FSTENVW, ASM_D16	;; ofs=2F7h
-	mne FSTENVD, ASM_D32	;; ofs=2F8h
+	mne FSTENVW, ASM_D16	;; ofs=2f7h
+	mne FSTENVD, ASM_D32	;; ofs=2f8h
 	 variant 231h, 29
 	 endvariant
-	mne FSTSW, ASM_WAIT	;; ofs=2FCh
-	mne FNSTSW	;; ofs=2FDh
+	mne FSTSW, ASM_WAIT	;; ofs=2fch
+	mne FNSTSW	;; ofs=2fdh
 	 fpvariant 0dfh, 30, 0e0h
 	 variant 23dh, 25
 	 endvariant
@@ -656,7 +656,7 @@ endif
 	 fpvariant 0d8h, 21, 0e0h
 	 fpvariant 0dch, 22, 0e8h
 	 endvariant
-	mne FSUBP	;; ofs=30Eh
+	mne FSUBP	;; ofs=30eh
 	 fpvariant 0deh, 23, 0e8h
 	 fpvariant 0deh, 0, 0e9h
 	 endvariant
@@ -664,7 +664,7 @@ endif
 	 variant 222h, 24
 	 variant 226h, 25
 	 endvariant
-	mne FSUBR	;; ofs=31Ah
+	mne FSUBR	;; ofs=31ah
 	 variant 228h, 19
 	 variant 22ch, 20
 	 fpvariant 0d8h, 21, 0e8h
@@ -674,7 +674,7 @@ endif
 	 fpvariant 0deh, 23, 0e0h
 	 fpvariant 0deh, 0, 0e1h
 	 endvariant
-	mne FISUBR	;; ofs=32Ch
+	mne FISUBR	;; ofs=32ch
 	 variant 22ah, 24
 	 variant 22eh, 25
 	 endvariant
@@ -685,7 +685,7 @@ endif
 	 fpvariant 0ddh, 28, 0e0h, , ASM_MACH3
 	 fpvariant 0ddh, 0, 0e1h, , ASM_MACH3
 	 endvariant
-	mne FUCOMI	;; ofs=33Eh
+	mne FUCOMI	;; ofs=33eh
 	 fpvariant 0dbh, 28, 0e8h, , ASM_MACH6
 	 fpvariant 0dbh, 0, 0e9h, , ASM_MACH6
 	 endvariant
@@ -700,7 +700,7 @@ endif
 	mne FUCOMPP	;; ofs=359h
 	 fpvariant 0dah, 0, 0e9h, , ASM_MACH3
 	 endvariant
-	mne FWAIT	;; ofs=35Eh
+	mne FWAIT	;; ofs=35eh
 	 variant 09bh, 0
 	 endvariant
 	mne FXAM	;; ofs=361h
@@ -710,7 +710,7 @@ endif
 	 fpvariant 0d9h, 28, 0c8h
 	 fpvariant 0d9h, 0, 0c9h
 	 endvariant
-	mne FXTRACT	;; ofs=36Ch
+	mne FXTRACT	;; ofs=36ch
 	 fpvariant 0d9h, 0, 0f4h
 	 endvariant
 	mne FYL2X	;; ofs=370h
@@ -722,10 +722,10 @@ endif
 	mne HLT	;; ofs=378h
 	 variant 0f4h, 0
 	 endvariant
-	mne IDIV	;; ofs=37Bh
+	mne IDIV	;; ofs=37bh
 	 variant AGRP(6,7), 16
 	 endvariant
-	mne IMUL	;; ofs=37Eh
+	mne IMUL	;; ofs=37eh
 	 variant AGRP(6,5), 16
 	 variant 1afh, 8, , ASM_MACH3
 	 variant 06bh, 31, , ASM_MACH1
@@ -741,75 +741,75 @@ endif
 	 variant 040h, 17
 	 variant AGRP(5,0), 16, ASM_LOCKABLE
 	 endvariant
-	mne INSB	;; ofs=39Bh
+	mne INSB	;; ofs=39bh
 	 variant 06ch, 0, , ASM_MACH1
 	 endvariant
-	mne INSW, ASM_D16	;; ofs=39Fh
-	mne INSD, ASM_D32	;; ofs=3A0h
+	mne INSW, ASM_D16	;; ofs=39fh
+	mne INSD, ASM_D32	;; ofs=3a0h
 	 variant 06dh, 0, , ASM_MACH1
 	 endvariant
-	mne INT	;; ofs=3A5h
+	mne INT	;; ofs=3a5h
 	 variant 0cch, 37
 	 variant 0cdh, 38
 	 endvariant
-	mne INTO	;; ofs=3AAh
+	mne INTO	;; ofs=3aah
 	 variant 0ceh, 0
 	 endvariant
-	mne INVD	;; ofs=3ADh
+	mne INVD	;; ofs=3adh
 	 variant 108h, 0, , ASM_MACH4
 	 endvariant
-	mne INVLPG	;; ofs=3B1h
+	mne INVLPG	;; ofs=3b1h
 	 variant AGRP(7,7), 29, , ASM_MACH4
 	 endvariant
-	mne IRET, ASM_D16	;; ofs=3B5h
-	mne IRETD, ASM_D32	;; ofs=3B6h
+	mne IRET, ASM_D16	;; ofs=3b5h
+	mne IRETD, ASM_D32	;; ofs=3b6h
 	 variant 0cfh, 0
 	 endvariant
-	mne JA	;; ofs=3BAh
+	mne JA	;; ofs=3bah
 	 variant 077h, 39
 	 variant 187h, 12, , ASM_MACH3
 	 endvariant
-	mne JAE	;; ofs=3C0h
+	mne JAE	;; ofs=3c0h
 	 variant 073h, 39
 	 variant 183h, 12, , ASM_MACH3
 	 endvariant
-	mne JB	;; ofs=3C6h
+	mne JB	;; ofs=3c6h
 	 variant 072h, 39
 	 variant 182h, 12, , ASM_MACH3
 	 endvariant
-	mne JBE	;; ofs=3CCh
+	mne JBE	;; ofs=3cch
 	 variant 076h, 39
 	 variant 186h, 12, , ASM_MACH3
 	 endvariant
-	mne JC	;; ofs=3D2h
+	mne JC	;; ofs=3d2h
 	 variant 072h, 39
 	 variant 182h, 12, , ASM_MACH3
 	 endvariant
-	mne JCXZ, ASM_D16	;; ofs=3D8h
-	mne JECXZ, ASM_D32	;; ofs=3D9h
+	mne JCXZ, ASM_D16	;; ofs=3d8h
+	mne JECXZ, ASM_D32	;; ofs=3d9h
 	 variant 0e3h, 39
 	 endvariant
-	mne JE	;; ofs=3DDh
+	mne JE	;; ofs=3ddh
 	 variant 074h, 39
 	 variant 184h, 12, , ASM_MACH3
 	 endvariant
-	mne JG	;; ofs=3E3h
+	mne JG	;; ofs=3e3h
 	 variant 07fh, 39
 	 variant 18fh, 12, , ASM_MACH3
 	 endvariant
-	mne JGE	;; ofs=3E9h
+	mne JGE	;; ofs=3e9h
 	 variant 07dh, 39
 	 variant 18dh, 12, , ASM_MACH3
 	 endvariant
-	mne JL	;; ofs=3EFh
+	mne JL	;; ofs=3efh
 	 variant 07ch, 39
 	 variant 18ch, 12, , ASM_MACH3
 	 endvariant
-	mne JLE	;; ofs=3F5h
+	mne JLE	;; ofs=3f5h
 	 variant 07eh, 39
 	 variant 18eh, 12, , ASM_MACH3
 	 endvariant
-	mne JNA	;; ofs=3FBh
+	mne JNA	;; ofs=3fbh
 	 variant 076h, 39
 	 variant 186h, 12, , ASM_MACH3
 	 endvariant
@@ -821,7 +821,7 @@ endif
 	 variant 073h, 39
 	 variant 183h, 12, , ASM_MACH3
 	 endvariant
-	mne JNBE	;; ofs=40Dh
+	mne JNBE	;; ofs=40dh
 	 variant 077h, 39
 	 variant 187h, 12, , ASM_MACH3
 	 endvariant
@@ -833,7 +833,7 @@ endif
 	 variant 075h, 39
 	 variant 185h, 12, , ASM_MACH3
 	 endvariant
-	mne JNG	;; ofs=41Fh
+	mne JNG	;; ofs=41fh
 	 variant 07eh, 39
 	 variant 18eh, 12, , ASM_MACH3
 	 endvariant
@@ -841,7 +841,7 @@ endif
 	 variant 07ch, 39
 	 variant 18ch, 12, , ASM_MACH3
 	 endvariant
-	mne JNL	;; ofs=42Bh
+	mne JNL	;; ofs=42bh
 	 variant 07dh, 39
 	 variant 18dh, 12, , ASM_MACH3
 	 endvariant
@@ -853,7 +853,7 @@ endif
 	 variant 071h, 39
 	 variant 181h, 12, , ASM_MACH3
 	 endvariant
-	mne JNP	;; ofs=43Dh
+	mne JNP	;; ofs=43dh
 	 variant 07bh, 39
 	 variant 18bh, 12, , ASM_MACH3
 	 endvariant
@@ -865,7 +865,7 @@ endif
 	 variant 075h, 39
 	 variant 185h, 12, , ASM_MACH3
 	 endvariant
-	mne JO	;; ofs=44Fh
+	mne JO	;; ofs=44fh
 	 variant 070h, 39
 	 variant 180h, 12, , ASM_MACH3
 	 endvariant
@@ -873,7 +873,7 @@ endif
 	 variant 07ah, 39
 	 variant 18ah, 12, , ASM_MACH3
 	 endvariant
-	mne JPE	;; ofs=45Bh
+	mne JPE	;; ofs=45bh
 	 variant 07ah, 39
 	 variant 18ah, 12, , ASM_MACH3
 	 endvariant
@@ -885,7 +885,7 @@ endif
 	 variant 078h, 39
 	 variant 188h, 12, , ASM_MACH3
 	 endvariant
-	mne JZ	;; ofs=46Dh
+	mne JZ	;; ofs=46dh
 	 variant 074h, 39
 	 variant 184h, 12, , ASM_MACH3
 	 endvariant
@@ -896,7 +896,7 @@ endif
 	 variant AGRP(3,5), 14
 	 variant 0eah, 13
 	 endvariant
-	mne LAHF	;; ofs=47Eh
+	mne LAHF	;; ofs=47eh
 	 variant 09fh, 0
 	 endvariant
 	mne LAR	;; ofs=481h
@@ -908,10 +908,10 @@ endif
 	mne LSS	;; ofs=488h
 	 variant 1b2h, 7, , ASM_MACH3
 	 endvariant
-	mne LES	;; ofs=48Ch
+	mne LES	;; ofs=48ch
 	 variant 0c4h, 7
 	 endvariant
-	mne LFS	;; ofs=48Fh
+	mne LFS	;; ofs=48fh
 	 variant 1b4h, 7, , ASM_MACH3
 	 endvariant
 	mne LGS	;; ofs=493h
@@ -920,79 +920,79 @@ endif
 	mne LEA	;; ofs=497h
 	 variant 08dh, 7
 	 endvariant
-	mne LEAVE	;; ofs=49Ah
+	mne LEAVE	;; ofs=49ah
 	 variant 0c9h, 0, , ASM_MACH1
 	 endvariant
-	mne LGDT	;; ofs=49Eh
+	mne LGDT	;; ofs=49eh
 	 variant AGRP(7,2), 29, , ASM_MACH2
 	 endvariant
-	mne LIDT	;; ofs=4A2h
+	mne LIDT	;; ofs=4a2h
 	 variant AGRP(7,3), 29, , ASM_MACH2
 	 endvariant
-	mne LLDT	;; ofs=4A6h
+	mne LLDT	;; ofs=4a6h
 	 variant AGRP(8,2), 41, , ASM_MACH2
 	 endvariant
-	mne LMSW	;; ofs=4AAh
+	mne LMSW	;; ofs=4aah
 	 variant AGRP(7,6), 41, , ASM_MACH2
 	 endvariant
-	mne LOCK, ASM_LOCKREP, 0f0h	;; ofs=4AEh
-	mne LODSB	;; ofs=4B0h
+	mne LOCK, ASM_LOCKREP, 0f0h	;; ofs=4aeh
+	mne LODSB	;; ofs=4b0h
 	 variant 0ach, 0
 	 endvariant
-	mne LODSW, ASM_D16	;; ofs=4B3h
-	mne LODSD, ASM_D32	;; ofs=4B4h
+	mne LODSW, ASM_D16	;; ofs=4b3h
+	mne LODSD, ASM_D32	;; ofs=4b4h
 	 variant 0adh, 0
 	 endvariant
-	mne LOOP	;; ofs=4B8h
+	mne LOOP	;; ofs=4b8h
 	 variant 0e2h, 39
 	 endvariant
-	mne LOOPW, ASM_D16	;; ofs=4BBh
-	mne LOOPD, ASM_D32	;; ofs=4BCh
+	mne LOOPW, ASM_D16	;; ofs=4bbh
+	mne LOOPD, ASM_D32	;; ofs=4bch
 	 variant 0e2h, 39
 	 endvariant
-	mne LOOPZ	;; ofs=4C0h
+	mne LOOPZ	;; ofs=4c0h
 	 variant 0e1h, 39
 	 endvariant
-	mne LOOPE	;; ofs=4C3h
+	mne LOOPE	;; ofs=4c3h
 	 variant 0e1h, 39
 	 endvariant
-	mne LOOPEW, ASM_D16	;; ofs=4C6h
-	mne LOOPED, ASM_D32	;; ofs=4C7h
+	mne LOOPEW, ASM_D16	;; ofs=4c6h
+	mne LOOPED, ASM_D32	;; ofs=4c7h
 	 variant 0e1h, 39
 	 endvariant
-	mne LOOPZW, ASM_D16	;; ofs=4CBh
-	mne LOOPZD, ASM_D32	;; ofs=4CCh
+	mne LOOPZW, ASM_D16	;; ofs=4cbh
+	mne LOOPZD, ASM_D32	;; ofs=4cch
 	 variant 0e1h, 39
 	 endvariant
-	mne LOOPNZ	;; ofs=4D0h
+	mne LOOPNZ	;; ofs=4d0h
 	 variant 0e0h, 39
 	 endvariant
-	mne LOOPNE	;; ofs=4D3h
+	mne LOOPNE	;; ofs=4d3h
 	 variant 0e0h, 39
 	 endvariant
-	mne LOOPNEW, ASM_D16	;; ofs=4D6h
-	mne LOOPNED, ASM_D32	;; ofs=4D7h
+	mne LOOPNEW, ASM_D16	;; ofs=4d6h
+	mne LOOPNED, ASM_D32	;; ofs=4d7h
 	 variant 0e0h, 39
 	 endvariant
-	mne LOOPNZW, ASM_D16	;; ofs=4DBh
-	mne LOOPNZD, ASM_D32	;; ofs=4DCh
+	mne LOOPNZW, ASM_D16	;; ofs=4dbh
+	mne LOOPNZD, ASM_D32	;; ofs=4dch
 	 variant 0e0h, 39
 	 endvariant
-	mne LSL	;; ofs=4E0h
+	mne LSL	;; ofs=4e0h
 	 variant 103h, 8, , ASM_MACH2
 	 endvariant
-	mne LTR	;; ofs=4E4h
+	mne LTR	;; ofs=4e4h
 	 variant AGRP(8,3), 41, , ASM_MACH2
 	 endvariant
-	mne MOV	;; ofs=4E8h
-	 variant 0a0h, 44       ;; mov AL/AX,[]
-	 variant 0a2h, 45       ;; mov [],AL/AX
-	 variant 088h, 4        ;; mov [],reg
-	 variant 08ah, 5        ;; mov reg,[]
-	 variant 08ch, 42       ;; mov m16/reg,sreg
-	 variant 08eh, 43       ;; mov sreg,m16/reg
-	 variant 0b0h, 46       ;; mov reg16,imm
-	 variant 0b8h, 47       ;; mov reg8,imm
+	mne MOV	;; ofs=4e8h
+	 variant 0a0h, 44       ;; mov AL/AX, []
+	 variant 0a2h, 45       ;; mov [], AL/AX
+	 variant 088h, 4        ;; mov [], reg
+	 variant 08ah, 5        ;; mov reg, []
+	 variant 08ch, 42       ;; mov m16/reg, sreg
+	 variant 08eh, 43       ;; mov sreg, m16/reg
+	 variant 0b0h, 46       ;; mov reg16, imm
+	 variant 0b8h, 47       ;; mov reg8, imm
 	 variant AGRP(9,0), 2
 	 variant 120h, 70, , ASM_MACH3
 	 variant 122h, 71, , ASM_MACH3
@@ -1002,7 +1002,7 @@ endif
 	 variant 126h, 75, , ASM_MACH3
 	 endvariant
 if MMXSUPP
-	mne MOVD	;; ofs=50Dh
+	mne MOVD	;; ofs=50dh
 	 variant 16eh, 76, , ASM_MACH5
 	 variant 17eh, 77, , ASM_MACH5
 	 endvariant
@@ -1011,18 +1011,18 @@ if MMXSUPP
 	 variant 17fh, 79, , ASM_MACH5
 	 endvariant
 endif
-	mne MOVSB	;; ofs=51Bh
+	mne MOVSB	;; ofs=51bh
 	 variant 0a4h, 0
 	 endvariant
-	mne MOVSW, ASM_D16	;; ofs=51Eh
-	mne MOVSD, ASM_D32	;; ofs=51Fh
+	mne MOVSW, ASM_D16	;; ofs=51eh
+	mne MOVSD, ASM_D32	;; ofs=51fh
 	 variant 0a5h, 0
 	 endvariant
 	mne MOVSX	;; ofs=523h
 	 variant 1beh, 48, , ASM_MACH3
 	 variant 1bfh, 49, , ASM_MACH3
 	 endvariant
-	mne MOVZX	;; ofs=52Ah
+	mne MOVZX	;; ofs=52ah
 	 variant 1b6h, 48, , ASM_MACH3
 	 variant 1b7h, 49, , ASM_MACH3
 	 endvariant
@@ -1035,18 +1035,18 @@ endif
 	mne NOP	;; ofs=538h
 	 variant 090h, 0
 	 endvariant
-	mne NOT	;; ofs=53Bh
+	mne NOT	;; ofs=53bh
 	 variant AGRP(6,2), 16, ASM_LOCKABLE
 	 endvariant
-	mne OR	;; ofs=53Fh
+	mne OR	;; ofs=53fh
 	 variant AGRP(0,1), 3, ASM_LOCKABLE
 	 variant 00ch, 1
 	 variant AGRP(1,1), 2, ASM_LOCKABLE
 	 variant 008h, 4, ASM_LOCKABLE
 	 variant 00ah, 5
 	 endvariant
-	mne ORG, ASM_ORG	;; ofs=54Dh
-	mne OUT	;; ofs=54Fh
+	mne ORG, ASM_ORG	;; ofs=54dh
+	mne OUT	;; ofs=54fh
 	 variant 0e6h, 50
 	 variant 0eeh, 51
 	 endvariant
@@ -1057,7 +1057,7 @@ endif
 	mne OUTSD, ASM_D32	;; ofs=559h
 	 variant 06fh, 0, , ASM_MACH1
 	 endvariant
-	mne POP	;; ofs=55Eh
+	mne POP	;; ofs=55eh
 	 variant AGRP(10,0), 52
 	 variant 058h, 17
 	 variant 01fh, 67
@@ -1066,7 +1066,7 @@ endif
 	 variant 1a1h, 68, , ASM_MACH3
 	 variant 1a9h, 69, , ASM_MACH3
 	 endvariant
-	mne POPA, ASM_D16	;; ofs=56Fh
+	mne POPA, ASM_D16	;; ofs=56fh
 	mne POPAD, ASM_D32	;; ofs=570h
 	 variant 061h, 0, , ASM_MACH1
 	 endvariant
@@ -1074,7 +1074,7 @@ endif
 	mne POPFD, ASM_D32	;; ofs=576h
 	 variant 09dh, 0
 	 endvariant
-	mne PUSH	;; ofs=57Ah
+	mne PUSH	;; ofs=57ah
 	 variant 050h, 17
 	 variant AGRP(3,6), 40
 	 variant 06ah, 54, , ASM_MACH1
@@ -1091,61 +1091,61 @@ endif
 	 variant 060h, 0, , ASM_MACH1
 	 endvariant
 	mne PUSHF, ASM_D16	;; ofs=599h
-	mne PUSHFD, ASM_D32	;; ofs=59Ah
+	mne PUSHFD, ASM_D32	;; ofs=59ah
 	 variant 09ch, 0
 	 endvariant
-	mne RCL	;; ofs=59Eh
+	mne RCL	;; ofs=59eh
 	 variant AGRP(11,2), 55
 	 variant AGRP(12,2), 56
 	 variant AGRP(13,2), 57, , ASM_MACH1
 	 endvariant
-	mne RCR	;; ofs=5A6h
+	mne RCR	;; ofs=5a6h
 	 variant AGRP(11,3), 55
 	 variant AGRP(12,3), 56
 	 variant AGRP(13,3), 57, , ASM_MACH1
 	 endvariant
-	mne ROL	;; ofs=5AEh
+	mne ROL	;; ofs=5aeh
 	 variant AGRP(11,0), 55
 	 variant AGRP(12,0), 56
 	 variant AGRP(13,0), 57, , ASM_MACH1
 	 endvariant
-	mne ROR	;; ofs=5B6h
+	mne ROR	;; ofs=5b6h
 	 variant AGRP(11,1), 55
 	 variant AGRP(12,1), 56
 	 variant AGRP(13,1), 57, , ASM_MACH1
 	 endvariant
-	mne RDMSR	;; ofs=5BEh
+	mne RDMSR	;; ofs=5beh
 	 variant 132h, 0, , ASM_MACH5
 	 endvariant
-	mne REP, ASM_LOCKREP, 0f3h	;; ofs=5C2h
-	mne REPE, ASM_LOCKREP, 0f3h	;; ofs=5C4h
-	mne REPNE, ASM_LOCKREP, 0f2h	;; ofs=5C6h
-	mne RET	;; ofs=5C8h
+	mne REP, ASM_LOCKREP, 0f3h	;; ofs=5c2h
+	mne REPE, ASM_LOCKREP, 0f3h	;; ofs=5c4h
+	mne REPNE, ASM_LOCKREP, 0f2h	;; ofs=5c6h
+	mne RET	;; ofs=5c8h
 	 variant 0c3h, 0
 	 variant 0c2h, 58
 	 endvariant
-	mne RETF, ASM_D16	;; ofs=5CDh
-	mne RETFD, ASM_D32	;; ofs=5CEh
+	mne RETF, ASM_D16	;; ofs=5cdh
+	mne RETFD, ASM_D32	;; ofs=5ceh
 	 variant 0cbh, 0
 	 variant 0cah, 58
 	 endvariant
-	mne RSM	;; ofs=5D4h
+	mne RSM	;; ofs=5d4h
 	 variant 1aah, 0, , ASM_MACH5
 	 endvariant
-	mne SAHF	;; ofs=5D8h
+	mne SAHF	;; ofs=5d8h
 	 variant 09eh, 0
 	 endvariant
-	mne SAL	;; ofs=5DBh
+	mne SAL	;; ofs=5dbh
 	 variant AGRP(11,4), 55
 	 variant AGRP(12,4), 56
 	 variant AGRP(13,4), 57, , ASM_MACH1
 	 endvariant
-	mne SAR	;; ofs=5E3h
+	mne SAR	;; ofs=5e3h
 	 variant AGRP(11,7), 55
 	 variant AGRP(12,7), 56
 	 variant AGRP(13,7), 57, , ASM_MACH1
 	 endvariant
-	mne SEG	;; ofs=5EBh
+	mne SEG	;; ofs=5ebh
 	 variant 026h, 64
 	 variant 02eh, 65
 	 variant 036h, 66
@@ -1153,10 +1153,10 @@ endif
 	 variant 064h, 68
 	 variant 065h, 69
 	 endvariant
-	mne ES, ASM_SEG, 026h	;; ofs=5F8h
-	mne CS, ASM_SEG, 02eh	;; ofs=5FAh
-	mne SS, ASM_SEG, 036h	;; ofs=5FCh
-	mne DS, ASM_SEG, 03eh	;; ofs=5FEh
+	mne ES, ASM_SEG, 026h	;; ofs=5f8h
+	mne CS, ASM_SEG, 02eh	;; ofs=5fah
+	mne SS, ASM_SEG, 036h	;; ofs=5fch
+	mne DS, ASM_SEG, 03eh	;; ofs=5feh
 	mne FS, ASM_SEG, 064h	;; ofs=600h
 	mne GS, ASM_SEG, 065h	;; ofs=602h
 	mne SHL	;; ofs=604h
@@ -1164,7 +1164,7 @@ endif
 	 variant AGRP(12,4), 56
 	 variant AGRP(13,4), 57, , ASM_MACH1
 	 endvariant
-	mne SHR	;; ofs=60Ch
+	mne SHR	;; ofs=60ch
 	 variant AGRP(11,5), 55
 	 variant AGRP(12,5), 56
 	 variant AGRP(13,5), 57, , ASM_MACH1
@@ -1183,10 +1183,10 @@ endif
 	mne SCASD, ASM_D32	;; ofs=626h
 	 variant 0afh, 0
 	 endvariant
-	mne SETA	;; ofs=62Ah
+	mne SETA	;; ofs=62ah
 	 variant 197h, 59, , ASM_MACH3
 	 endvariant
-	mne SETAE	;; ofs=62Eh
+	mne SETAE	;; ofs=62eh
 	 variant 193h, 59, , ASM_MACH3
 	 endvariant
 	mne SETB	;; ofs=632h
@@ -1195,10 +1195,10 @@ endif
 	mne SETBE	;; ofs=636h
 	 variant 196h, 59, , ASM_MACH3
 	 endvariant
-	mne SETC	;; ofs=63Ah
+	mne SETC	;; ofs=63ah
 	 variant 192h, 59, , ASM_MACH3
 	 endvariant
-	mne SETE	;; ofs=63Eh
+	mne SETE	;; ofs=63eh
 	 variant 194h, 59, , ASM_MACH3
 	 endvariant
 	mne SETG	;; ofs=642h
@@ -1207,10 +1207,10 @@ endif
 	mne SETGE	;; ofs=646h
 	 variant 19dh, 59, , ASM_MACH3
 	 endvariant
-	mne SETL	;; ofs=64Ah
+	mne SETL	;; ofs=64ah
 	 variant 19ch, 59, , ASM_MACH3
 	 endvariant
-	mne SETLE	;; ofs=64Eh
+	mne SETLE	;; ofs=64eh
 	 variant 19eh, 59, , ASM_MACH3
 	 endvariant
 	mne SETNA	;; ofs=652h
@@ -1219,10 +1219,10 @@ endif
 	mne SETNAE	;; ofs=656h
 	 variant 192h, 59, , ASM_MACH3
 	 endvariant
-	mne SETNB	;; ofs=65Ah
+	mne SETNB	;; ofs=65ah
 	 variant 193h, 59, , ASM_MACH3
 	 endvariant
-	mne SETNBE	;; ofs=65Eh
+	mne SETNBE	;; ofs=65eh
 	 variant 197h, 59, , ASM_MACH3
 	 endvariant
 	mne SETNC	;; ofs=662h
@@ -1231,10 +1231,10 @@ endif
 	mne SETNE	;; ofs=666h
 	 variant 195h, 59, , ASM_MACH3
 	 endvariant
-	mne SETNG	;; ofs=66Ah
+	mne SETNG	;; ofs=66ah
 	 variant 19eh, 59, , ASM_MACH3
 	 endvariant
-	mne SETNGE	;; ofs=66Eh
+	mne SETNGE	;; ofs=66eh
 	 variant 19ch, 59, , ASM_MACH3
 	 endvariant
 	mne SETNL	;; ofs=672h
@@ -1243,10 +1243,10 @@ endif
 	mne SETNLE	;; ofs=676h
 	 variant 19fh, 59, , ASM_MACH3
 	 endvariant
-	mne SETNO	;; ofs=67Ah
+	mne SETNO	;; ofs=67ah
 	 variant 191h, 59, , ASM_MACH3
 	 endvariant
-	mne SETNP	;; ofs=67Eh
+	mne SETNP	;; ofs=67eh
 	 variant 19bh, 59, , ASM_MACH3
 	 endvariant
 	mne SETNS	;; ofs=682h
@@ -1255,10 +1255,10 @@ endif
 	mne SETNZ	;; ofs=686h
 	 variant 195h, 59, , ASM_MACH3
 	 endvariant
-	mne SETO	;; ofs=68Ah
+	mne SETO	;; ofs=68ah
 	 variant 190h, 59, , ASM_MACH3
 	 endvariant
-	mne SETP	;; ofs=68Eh
+	mne SETP	;; ofs=68eh
 	 variant 19ah, 59, , ASM_MACH3
 	 endvariant
 	mne SETPE	;; ofs=692h
@@ -1267,80 +1267,80 @@ endif
 	mne SETPO	;; ofs=696h
 	 variant 19bh, 59, , ASM_MACH3
 	 endvariant
-	mne SETS	;; ofs=69Ah
+	mne SETS	;; ofs=69ah
 	 variant 198h, 59, , ASM_MACH3
 	 endvariant
-	mne SETZ	;; ofs=69Eh
+	mne SETZ	;; ofs=69eh
 	 variant 194h, 59, , ASM_MACH3
 	 endvariant
-	mne SGDT	;; ofs=6A2h
+	mne SGDT	;; ofs=6a2h
 	 variant AGRP(7,0), 29, , ASM_MACH2
 	 endvariant
-	mne SIDT	;; ofs=6A6h
+	mne SIDT	;; ofs=6a6h
 	 variant AGRP(7,1), 29, , ASM_MACH2
 	 endvariant
-	mne SHLD	;; ofs=6AAh
+	mne SHLD	;; ofs=6aah
 	 variant 1a4h, 60, , ASM_MACH3
 	 variant 1a5h, 61, , ASM_MACH3
 	 endvariant
-	mne SHRD	;; ofs=6B1h
+	mne SHRD	;; ofs=6b1h
 	 variant 1ach, 60, , ASM_MACH3
 	 variant 1adh, 61, , ASM_MACH3
 	 endvariant
-	mne SLDT	;; ofs=6B8h
+	mne SLDT	;; ofs=6b8h
 	 variant AGRP(8,0), 40, , ASM_MACH2
 	 endvariant
-	mne SMSW	;; ofs=6BCh
+	mne SMSW	;; ofs=6bch
 	 variant AGRP(7,4), 40, , ASM_MACH2
 	 endvariant
-	mne STC	;; ofs=6C0h
+	mne STC	;; ofs=6c0h
 	 variant 0f9h, 0
 	 endvariant
-	mne STD	;; ofs=6C3h
+	mne STD	;; ofs=6c3h
 	 variant 0fdh, 0
 	 endvariant
-	mne STI	;; ofs=6C6h
+	mne STI	;; ofs=6c6h
 	 variant 0fbh, 0
 	 endvariant
-	mne STOSB	;; ofs=6C9h
+	mne STOSB	;; ofs=6c9h
 	 variant 0aah, 0
 	 endvariant
-	mne STOSW, ASM_D16	;; ofs=6CCh
-	mne STOSD, ASM_D32	;; ofs=6CDh
+	mne STOSW, ASM_D16	;; ofs=6cch
+	mne STOSD, ASM_D32	;; ofs=6cdh
 	 variant 0abh, 0
 	 endvariant
-	mne STR	;; ofs=6D1h
+	mne STR	;; ofs=6d1h
 	 variant AGRP(8,1), 41, , ASM_MACH2
 	 endvariant
-	mne SUB	;; ofs=6D5h
+	mne SUB	;; ofs=6d5h
 	 variant AGRP(0,5), 3, ASM_LOCKABLE
 	 variant 02ch, 1
 	 variant AGRP(1,5), 2, ASM_LOCKABLE
 	 variant 028h, 4, ASM_LOCKABLE
 	 variant 02ah, 5
 	 endvariant
-	mne TEST	;; ofs=6E3h
+	mne TEST	;; ofs=6e3h
 	 variant 0a8h, 1
 	 variant AGRP(6,0), 2
 	 variant 084h, 4
 	 variant 084h, 5
 	 endvariant
-	mne VERR	;; ofs=6ECh
+	mne VERR	;; ofs=6ech
 	 variant AGRP(8,4), 41, , ASM_MACH2
 	 endvariant
-	mne VERW	;; ofs=6F0h
+	mne VERW	;; ofs=6f0h
 	 variant AGRP(8,5), 41, , ASM_MACH2
 	 endvariant
-	mne WAIT	;; ofs=6F4h
+	mne WAIT	;; ofs=6f4h
 	 variant 09bh, 0
 	 endvariant
-	mne WBINVD	;; ofs=6F7h
+	mne WBINVD	;; ofs=6f7h
 	 variant 109h, 0, , ASM_MACH4
 	 endvariant
-	mne WRMSR	;; ofs=6FBh
+	mne WRMSR	;; ofs=6fbh
 	 variant 130h, 0, , ASM_MACH5
 	 endvariant
-	mne XADD	;; ofs=6FFh
+	mne XADD	;; ofs=6ffh
 	 variant 1c0h, 4, ASM_LOCKABLE, ASM_MACH4
 	 endvariant
 	mne XCHG	;; ofs=704h
@@ -1349,7 +1349,7 @@ endif
 	 variant 086h, 4, ASM_LOCKABLE
 	 variant 086h, 5, ASM_LOCKABLE
 	 endvariant
-	mne XLAT	;; ofs=70Fh
+	mne XLAT	;; ofs=70fh
 	 variant 0d7h, 0
 	 endvariant
 	mne XLATB	;; ofs=712h
@@ -1374,15 +1374,15 @@ optypes label byte
 	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),OT(41),  002h	;; 08 - 0f
 	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),OT(42),OT(42)	;; 10 - 17
 	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),OT(43),OT(43)	;; 18 - 1f
-	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),  00Ah,OT(00)	;; 20 - 27
-	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),  00Ah,OT(00)	;; 28 - 2f
-	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),  00Ah,OT(00)	;; 30 - 37
-	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),  00Ah,OT(00)	;; 38 - 3f
+	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),  00ah,OT(00)	;; 20 - 27
+	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),  00ah,OT(00)	;; 28 - 2f
+	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),  00ah,OT(00)	;; 30 - 37
+	db OT(04),OT(04),OT(05),OT(05),OT(01),OT(01),  00ah,OT(00)	;; 38 - 3f
 	db OT(11),OT(11),OT(11),OT(11),OT(11),OT(11),OT(11),OT(11)	;; 40 - 47
 	db OT(11),OT(11),OT(11),OT(11),OT(11),OT(11),OT(11),OT(11)	;; 48 - 4f
 	db OT(11),OT(11),OT(11),OT(11),OT(11),OT(11),OT(11),OT(11)	;; 50 - 57
 	db OT(11),OT(11),OT(11),OT(11),OT(11),OT(11),OT(11),OT(11)	;; 58 - 5f
-	db OT(00),OT(00),OT(07),OT(06),  00Ah,  00Ah,  00Ah,  00Ah	;; 60 - 67
+	db OT(00),OT(00),OT(07),OT(06),  00ah,  00ah,  00ah,  00ah	;; 60 - 67
 	db OT(35),OT(21),OT(36),OT(1F),OT(00),OT(00),OT(00),OT(00)	;; 68 - 6f
 	db OT(27),OT(27),OT(27),OT(27),OT(27),OT(27),OT(27),OT(27)	;; 70 - 77
 	db OT(27),OT(27),OT(27),OT(27),OT(27),OT(27),OT(27),OT(27)	;; 78 - 7f
@@ -1400,7 +1400,7 @@ optypes label byte
 	db   006h,  006h,  006h,  006h,  006h,  006h,  006h,  006h	;; d8 - df
 	db OT(27),OT(27),OT(27),OT(27),OT(23),OT(23),OT(32),OT(32)	;; e0 - e7
 	db OT(0C),OT(0C),OT(0D),OT(27),OT(24),OT(24),OT(33),OT(33)	;; e8 - ef
-	db   00Ah,  000h,  00Ah,  00Ah,OT(00),OT(00),  004h,  004h	;; f0 - f7
+	db   00ah,  000h,  00ah,  00ah,OT(00),OT(00),  004h,  004h	;; f0 - f7
 	db OT(00),OT(00),OT(00),OT(00),OT(00),OT(00),  004h,  004h	;; f8 - ff
 	db OT(02),OT(02),OT(02),OT(02),OT(02),OT(02),OT(02),OT(02)	;; 100 - 107 (Intel group 1)
 	db OT(03),OT(03),OT(03),OT(03),OT(03),OT(03),OT(03),OT(03)	;; 108 - 10f
@@ -1592,11 +1592,11 @@ opinfo label word
 	dw  0, 0138h, 0140h, P286 + MN_LAR	;; 00
 	dw  P286 + MN_LSL, P286 + MN_CLTS, P486 + MN_INVD, P486 + MN_WBINVD	;; 04
 	dw  P386 + MN_MOV, P386 + MN_MOV, P386 + MN_MOV, P386 + MN_MOV	;; 08
-	dw  P386 + MN_MOV, P386 + MN_MOV, P586 + MN_WRMSR, P586 + MN_RDMSR	;; 0C
+	dw  P386 + MN_MOV, P386 + MN_MOV, P586 + MN_WRMSR, P586 + MN_RDMSR	;; 0c
 	dw  P686 + MN_CMOVO, P686 + MN_CMOVNO, P686 + MN_CMOVB, P686 + MN_CMOVAE	;; 10
 	dw  P686 + MN_CMOVZ, P686 + MN_CMOVNZ, P686 + MN_CMOVBE, P686 + MN_CMOVA	;; 14
 	dw  P686 + MN_CMOVS, P686 + MN_CMOVNS, P686 + MN_CMOVPE, P686 + MN_CMOVPO	;; 18
-	dw  P686 + MN_CMOVL, P686 + MN_CMOVGE, P686 + MN_CMOVLE, P686 + MN_CMOVG	;; 1C
+	dw  P686 + MN_CMOVL, P686 + MN_CMOVGE, P686 + MN_CMOVLE, P686 + MN_CMOVG	;; 1c
 if MMXSUPP
 	dw  P586 + MN_MOVD, P586 + MN_MOVQ, P586 + MN_EMMS, P586 + MN_MOVD	;; 20
 	dw  P586 + MN_MOVQ, P386 + MN_JO, P386 + MN_JNO, P386 + MN_JB	;; 24
@@ -1605,37 +1605,37 @@ else
 	dw  0, P386 + MN_JO, P386 + MN_JNO, P386 + MN_JB	;; 24
 endif
 	dw  P386 + MN_JAE, P386 + MN_JZ, P386 + MN_JNZ, P386 + MN_JBE	;; 28
-	dw  P386 + MN_JA, P386 + MN_JS, P386 + MN_JNS, P386 + MN_JPE	;; 2C
+	dw  P386 + MN_JA, P386 + MN_JS, P386 + MN_JNS, P386 + MN_JPE	;; 2c
 	dw  P386 + MN_JPO, P386 + MN_JL, P386 + MN_JGE, P386 + MN_JLE	;; 30
 	dw  P386 + MN_JG, P386 + MN_SETO, P386 + MN_SETNO, P386 + MN_SETB	;; 34
 	dw  P386 + MN_SETAE, P386 + MN_SETZ, P386 + MN_SETNZ, P386 + MN_SETBE	;; 38
-	dw  P386 + MN_SETA, P386 + MN_SETS, P386 + MN_SETNS, P386 + MN_SETPE	;; 3C
+	dw  P386 + MN_SETA, P386 + MN_SETS, P386 + MN_SETNS, P386 + MN_SETPE	;; 3c
 	dw  P386 + MN_SETPO, P386 + MN_SETL, P386 + MN_SETGE, P386 + MN_SETLE	;; 40
 	dw  P386 + MN_SETG, P386 + MN_PUSH, P386 + MN_POP, P586 + MN_CPUID	;; 44
 	dw  P386 + MN_BT, P386 + MN_SHLD, P386 + MN_SHLD, P386 + MN_PUSH	;; 48
-	dw  P386 + MN_POP, P586 + MN_RSM, P386 + MN_BTS, P386 + MN_SHRD	;; 4C
+	dw  P386 + MN_POP, P586 + MN_RSM, P386 + MN_BTS, P386 + MN_SHRD	;; 4c
 	dw  P386 + MN_SHRD, P386 + MN_IMUL, P486 + MN_CMPXCHG, P486 + MN_CMPXCHG	;; 50
 	dw  P386 + MN_LSS, P386 + MN_BTR, P386 + MN_LFS, P386 + MN_LGS	;; 54
 	dw  P386 + MN_MOVZX, P386 + MN_MOVZX, 02e8h, P386 + MN_BTC	;; 58
-	dw  P386 + MN_BSF, P386 + MN_BSR, P386 + MN_MOVSX, P386 + MN_MOVSX	;; 5C
+	dw  P386 + MN_BSF, P386 + MN_BSR, P386 + MN_MOVSX, P386 + MN_MOVSX	;; 5c
 	dw  P486 + MN_XADD, P486 + MN_XADD, 02f0h, P486 + MN_BSWAP	;; 60
 	dw  P486 + MN_BSWAP, P486 + MN_BSWAP, P486 + MN_BSWAP, P486 + MN_BSWAP	;; 64
 	dw  P486 + MN_BSWAP, P486 + MN_BSWAP, P486 + MN_BSWAP, MN_INC	;; 68
-	dw  MN_DEC, P386 + MN_BT, P386 + MN_BTS, P386 + MN_BTR	;; 6C
+	dw  MN_DEC, P386 + MN_BT, P386 + MN_BTS, P386 + MN_BTR	;; 6c
 	dw  P386 + MN_BTC, P586 + MN_CMPXCHG8B, MN_POP, MN_MOV	;; 70
 	dw  MN_FNOP, MN_FCHS, MN_FABS, MN_FTST	;; 74
 	dw  MN_FXAM, P386 + MN_FUCOMPP, MN_FNENI, MN_FNDISI	;; 78
-	dw  MN_FNCLEX, MN_FNINIT, P286 + MN_FNSETPM, MN_FCOMPP	;; 7C
+	dw  MN_FNCLEX, MN_FNINIT, P286 + MN_FNSETPM, MN_FCOMPP	;; 7c
 	dw  MN_FNSTSW
 
 ;; --- Disassembler: table converts unsqueezed numbers to squeezed.
-;; --- 1E0-2DF are extended opcodes (0f xx).
+;; --- 1e0-2df are extended opcodes (0f xx).
 
 sqztab label byte
-	db   1,  2,  3,  4,  0,  0,  5,  0	;; 1E0
-	db   6,  7,  0,  0,  0,  0,  0,  0	;; 1E8
-	db   0,  0,  0,  0,  0,  0,  0,  0	;; 1F0
-	db   0,  0,  0,  0,  0,  0,  0,  0	;; 1F8
+	db   1,  2,  3,  4,  0,  0,  5,  0	;; 1e0
+	db   6,  7,  0,  0,  0,  0,  0,  0	;; 1e8
+	db   0,  0,  0,  0,  0,  0,  0,  0	;; 1f0
+	db   0,  0,  0,  0,  0,  0,  0,  0	;; 1f8
 	db   8,  9, 10, 11, 12,  0, 13,  0	;; 200
 	db   0,  0,  0,  0,  0,  0,  0,  0	;; 208
 	db  14,  0, 15,  0,  0,  0,  0,  0	;; 210
@@ -1656,26 +1656,27 @@ sqztab label byte
 	db  75, 76, 77, 78, 79, 80,  0, 81	;; 288
 	db  82, 83, 84, 85, 86, 87, 88, 89	;; 290
 	db   0,  0, 90, 91, 92, 93, 94, 95	;; 298
-	db  96, 97,  0,  0,  0,  0,  0, 98	;; 2A0
-	db  99,100,101,102,103,104,105,106	;; 2A8
-	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2B0
-	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2B8
-	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2C0
-	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2C8
-	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2D0
-	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2D8
+	db  96, 97,  0,  0,  0,  0,  0, 98	;; 2a0
+	db  99,100,101,102,103,104,105,106	;; 2a8
+	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2b0
+	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2b8
+	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2c0
+	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2c8
+	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2d0
+	db   0,  0,  0,  0,  0,  0,  0,  0	;; 2d8
 
-;; --- 2E0-307 are 5 sparse groups.
+;; --- 2e0-307 are 5 sparse groups.
 
-	db 107,108,  0,  0,  0,  0,  0,  0	;; 2E0  FE, Intel grp 4)
-	db   0,  0,  0,  0,109,110,111,112	;; 2E8 1BA, Intel grp 8)
-	db   0,113,  0,  0,  0,  0,  0,  0	;; 2F0 1C7, Intel grp 9)
-	db 114,  0,  0,  0,  0,  0,  0,  0	;; 2F8  8F
-	db 115,  0,  0,  0,  0,  0,  0,  0	;; 300  C6/C7
+	db 107,108,  0,  0,  0,  0,  0,  0	;; 2e0 0fe (Intel group 4)
+	db   0,  0,  0,  0,109,110,111,112	;; 2e8 1ba (Intel group 8)
+	db   0,113,  0,  0,  0,  0,  0,  0	;; 2f0 1c7 (Intel group 9)
+	db 114,  0,  0,  0,  0,  0,  0,  0	;; 2f8 08f
+	db 115,  0,  0,  0,  0,  0,  0,  0	;; 300 0c6/0c7
 
 ;; --- 308-337 are 6 sparse fpu groups.
+
 SFPGROUPS equ SPARSE_BASE + ($ - sqztab)
-SFPGROUP3 equ SFPGROUPS + 8 * 3
+SFPGROUP3 equ SFPGROUPS + 8*3
 	db 116,  0,  0,  0,  0,  0,  0,  0	;; 308 d9d0
 	db 117,118,  0,  0,119,120,  0,  0	;; 310 d9e0
 	db   0,121,  0,  0,  0,  0,  0,  0	;; 318 dae8
@@ -1700,14 +1701,14 @@ wtab2 label word
 	dw MN_FSTENV
 	dw MN_FSTSW
 	dw MN_FSTSW
-N_WTAB	equ ($ - wtab2) / 2
+N_WTAB	equ ($ - wtab2)/2
 
 ;; --- Disassembler: table for operands which have a different mnemonic for
 ;; --- their 32 bit versions (66h prefix).
 
-ltabo1	dw 098h,0a7h,099h,015ch,019ch,019eh,015eh,06dh
-	dw 0cfh,0adh,0a5h,06fh,061h,09dh,060h,09ch
-	dw 0cbh,0cah,0afh,0abh
+ltabo1	dw 0098h,00a7h,0099h,015ch,019ch,019eh,015eh,006dh
+	dw 00cfh,00adh,00a5h,006fh,0061h,009dh,0060h,009ch
+	dw 00cbh,00cah,00afh,00abh
 ltabo2 label word
 	dw MN_CWDE
 	dw MN_CMPSD
@@ -1729,12 +1730,12 @@ ltabo2 label word
 	dw MN_RETFD
 	dw MN_SCASD
 	dw MN_STOSD
-N_LTABO	equ ($ - ltabo2) / 2
+N_LTABO	equ ($ - ltabo2)/2
 
 ;; --- Disassembler: table for operands which have a different mnemonic for
 ;; --- their 32 bit versions (67h prefix).
 
-ltaba1	dw 0e3h,0e2h,0e1h,0e1h,0e0h,0e0h
+ltaba1	dw 00e3h,00e2h,00e1h,00e1h,00e0h,00e0h
 ltaba2 label word
 	dw MN_JECXZ
 	dw MN_LOOPD
@@ -1742,16 +1743,15 @@ ltaba2 label word
 	dw MN_LOOPZD
 	dw MN_LOOPNED
 	dw MN_LOOPNZD
-N_LTABA	equ ($ - ltaba2) / 2
+N_LTABA	equ ($ - ltaba2)/2
 
 ;; --- Disassembler: table of lockable instructions
 
 locktab label word
-	dw 010ah,0102h,010h,011h,0108h,0100h,00h,01h
-	dw 010ch,0104h,020h,021h,029bh,02efh,0293h,02eeh
+	dw 010ah,0102h,0010h,0011h,0108h,0100h,0000h,0001h
+	dw 010ch,0104h,0020h,0021h,029bh,02efh,0293h,02eeh
 	dw 028bh,02edh,0290h,0291h,02e1h,0131h,02e0h,0130h
-	dw 012bh,012ah,0109h,0101h,08h,09h,010bh,0103h
-	dw 018h,019h,010dh,0105h,028h,029h,02a0h,02a1h
-	dw 086h,087h,010eh,0106h,030h,031h
-N_LOCK	equ ($ - locktab) / 2
-
+	dw 012bh,012ah,0109h,0101h,0008h,0009h,010bh,0103h
+	dw 0018h,0019h,010dh,0105h,0028h,0029h,02a0h,02a1h
+	dw 0086h,0087h,010eh,0106h,0030h,0031h
+N_LOCK	equ ($ - locktab)/2

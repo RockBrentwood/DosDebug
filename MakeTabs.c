@@ -30,8 +30,7 @@ int OffsetTab[TypeMax];
 bool IsSmall[TypeMax];
 
 #define OrdMax 30
-int Ords = 0;
-KeyT Ord0[OrdMax], Ord1[OrdMax];
+int Ords = 0; KeyT Ord0[OrdMax], Ord1[OrdMax];
 
 // Equates for the assembler table.
 // These should be the same as in Debug.asm.
@@ -71,8 +70,7 @@ volatile void Fatal(const char *Format, ...) {
    exit(EXIT_FAILURE);
 }
 
-const char *File;
-int Line;
+const char *File; int Line;
 
 FILE *OpenRead(const char *Path) {
    FILE *InF = fopen(Path, "r"); if (InF == NULL) perror(Path), exit(EXIT_FAILURE);
@@ -145,7 +143,7 @@ unsigned char GetCPU(char **SP) {
 
 KeyT LookUpKey(short Key) {
    for (KeyT K = KeyDict; K < KeyDict + Members(KeyDict); K++) if (Key == K->Key) return K;
-   Error("can't find key %X", Key);
+   Error("can't find key %x", Key);
    return NULL;
 }
 
@@ -365,7 +363,7 @@ void GetOps(FILE *InF) {
          bool AsmOnly = AsmOnlyLine || *S1 == '_', DisOnly = *S1 == 'D';
          if (*S1 == '_' || *S1 == 'D') S1++;
          bool Lockable = *S1 == 'L';
-         if (*S1 == 'L') {
+         if (Lockable) {
             S1++;
             if (!DisOnly) AddAsm(LockableA);
          }
@@ -485,7 +483,7 @@ struct InfoRec {
 void _PutDw(FILE *ExF, int *Tab, int N) {
    for (; N > 0; N -= 8) {
       const char *InitS = "\tdw ";
-      for (int n = (N <= 8? N: 8); n > 0; n--) fprintf(ExF, "%s0%xh", InitS, *Tab++), InitS = ",";
+      for (int n = (N <= 8? N: 8); n > 0; n--) fprintf(ExF, "%s%04xh", InitS, *Tab++), InitS = ",";
       putc('\n', ExF);
    }
 }
@@ -537,14 +535,14 @@ void PutTables(FILE *ExF) {
          KeySize[0] = (unsigned char)(KeyDict[K].Key);
          KeySize[1] = '\0';
       }
-      fprintf(ExF, "\topl %s, %s\t;; ofs=%Xh\n", KeySize, NameTab[K], OffsetTab[K]);
+      fprintf(ExF, "\topl %s, %s\t;; ofs=%03xh\n", KeySize, NameTab[K], OffsetTab[K]);
 #else
-      fprintf(ExF, "\topl %s\t;; idx=%u, ofs=%Xh\n", NameTab[K], K + 1, OffsetTab[K]);
+      fprintf(ExF, "\topl %s\t;; idx=%02u, ofs=%03xh\n", NameTab[K], K + 1, OffsetTab[K]);
 #endif
    }
 #if 0
-   fprintf(ExF, "\nOPLIST_27\tEQU 0%Xh\t;; this is the OP_IMM8 key\n", OffsetTab[LookUpKey('27')->Value]);
-   fprintf(ExF, "OPLIST_41\tEQU 0%Xh\t;; this is the OP_ES key\n", OffsetTab[LookUpKey('41')->Value]);
+   fprintf(ExF, "\nOPLIST_27\tEQU 0%xh\t;; this is the _Db key\n", OffsetTab[LookUpKey('27')->Value]);
+   fprintf(ExF, "OPLIST_41\tEQU 0%xh\t;; this is the _ES key\n", OffsetTab[LookUpKey('41')->Value]);
 #endif
 #if 0
    fprintf(ExF, "\nASMMOD\tEQU %u\n", Keys + 1);
@@ -559,7 +557,7 @@ void PutTables(FILE *ExF) {
       "\n"
       "agroups label word\n"
    );
-   for (int G = 0; G < AGroups; G++) fprintf(ExF, "\tdw %03Xh\t;; %u\n", AGroupInf[G], G);
+   for (int G = 0; G < AGroups; G++) fprintf(ExF, "\tdw %03xh\t;; %u\n", AGroupInf[G], G);
 // Dump out AsmTab.
    fprintf(ExF,
       "\n"
@@ -583,12 +581,12 @@ void PutTables(FILE *ExF) {
 #if 0
          fprintf(ExF, ", ASM_D16\t;; ofs=%04x\n", I);
 #else
-         fprintf(ExF, ", ASM_D16\t;; ofs=%Xh\n", I);
+         fprintf(ExF, ", ASM_D16\t;; ofs=%03xh\n", I);
 #endif
       else if (AsmTab[I] >= WaitA)
-         fprintf(ExF, ", ASM_%s\t;; ofs=%Xh\n", SpecTab0[AsmTab[I] - WaitA], I);
+         fprintf(ExF, ", ASM_%s\t;; ofs=%03xh\n", SpecTab0[AsmTab[I] - WaitA], I);
       else if ((AsmTab[I] == SegA || AsmTab[I] == LockRepA))
-         fprintf(ExF, ", ASM_%s, %03xh\t;; ofs=%Xh\n", SpecTab1[AsmTab[I] - LockRepA], AsmTab[I + 1], I);
+         fprintf(ExF, ", ASM_%s, %03xh\t;; ofs=%03xh\n", SpecTab1[AsmTab[I] - LockRepA], AsmTab[I + 1], I);
       else {
          int A = I;
          for (; AsmTab[A] > SegA && AsmTab[A] < WaitA; A++) switch (AsmTab[A]) {
@@ -596,7 +594,7 @@ void PutTables(FILE *ExF) {
             case D16A: fprintf(ExF, ", ASM_D16"); break;
             case D32A: fprintf(ExF, ", ASM_D32"); break;
          }
-         fprintf(ExF, "\t;; ofs=%Xh\n", I);
+         fprintf(ExF, "\t;; ofs=%03xh\n", I);
          for (; A < Asms; ) {
             char CPU[12] = { "" };
             if (AsmTab[A] == 0xff) break;
@@ -650,8 +648,8 @@ void PutTables(FILE *ExF) {
          if (OpType[I + J] >= OPTYPES) {
             int K = 0;
             if (OpType[I + J] > OPTYPES) for (K = 1; K <= Keys; K++) if (OffsetTab[K - 1] == OpType[I + J]) break;
-            if (K <= Keys) fprintf(ExF, "OT(%02X)", K); else Fatal("offset not found for %u: %X", I + J, OpType[I + J]);
-         } else fprintf(ExF, "  %03Xh", OpType[I + J]);
+            if (K <= Keys) fprintf(ExF, "OT(%02X)", K); else Fatal("offset not found for %u: %x", I + J, OpType[I + J]);
+         } else fprintf(ExF, "  %03xh", OpType[I + J]);
          AuxS = ",";
       }
       fprintf(ExF, "\t;; %02x - %02x", I, I + 7);
@@ -669,15 +667,15 @@ void PutTables(FILE *ExF) {
       if (J >= OPTYPES) {
          int K = 0;
          if (J > OPTYPES) for (K = 1; K <= Keys; K++) if (OffsetTab[K - 1] == J) break;
-         if (K <= Keys) fprintf(ExF, "%sOT(%02X)", AuxS, K); else Fatal("offset not found for %u: %X", I, J);
-      } else fprintf(ExF, "%s  %03Xh", AuxS, J);
+         if (K <= Keys) fprintf(ExF, "%sOT(%02X)", AuxS, K); else Fatal("offset not found for %u: %x", I, J);
+      } else fprintf(ExF, "%s  %03xh", AuxS, J);
       X++;
-      if ((X&7) == 0) fprintf(ExF, "\t;; %02X", X - 8), AuxS = "\n\tdb "; else AuxS = ",";
+      if ((X&7) == 0) fprintf(ExF, "\t;; %02x", X - 8), AuxS = "\n\tdb "; else AuxS = ",";
    }
    putc('\n', ExF);
 // Print out OpInfo[].
    putc('\n', ExF);
-   for (int I = 1; I < 7; I++) fprintf(ExF, "P%u86\tequ %Xh\n", I, I << ShiftM);
+   for (int I = 1; I < 7; I++) fprintf(ExF, "P%u86\tequ %xh\n", I, I << ShiftM);
    fprintf(ExF,
       "\n"
       "\talign 2\n"
@@ -708,15 +706,14 @@ void PutTables(FILE *ExF) {
       if (OpCPU[I]) fprintf(ExF, " P%u86 +", OpCPU[I]);
       if (J >= OPTYPES) fprintf(ExF, " MN_%s", OpList[OpInfo[I]].Id); else fprintf(ExF, " %04xh", OpInfo[I]);
       X++;
-      if ((X&3) == 0) fprintf(ExF, "\t;; %02X", X - 4), AuxS = "\n\tdw "; else AuxS = ",";
+      if ((X&3) == 0) fprintf(ExF, "\t;; %02x", X - 4), AuxS = "\n\tdw "; else AuxS = ",";
    }
    putc('\n', ExF);
 // Print out sqztab.
    fprintf(ExF,
       "\n"
       ";; --- Disassembler: table converts unsqueezed numbers to squeezed.\n"
-      ";; --- 1E0-2DF are extended opcodes (0f xx).\n"
-      "\n"
+      ";; --- 1e0-2df are extended opcodes (0f xx).\n"
       "\n"
       "sqztab label byte\n"
    );
@@ -725,11 +722,11 @@ void PutTables(FILE *ExF) {
       else if (I == SPARSE_BASE + 0x100 + 010*NSGROUPS) {
          fprintf(ExF, "\n;; --- %u sparse fpu groups\n\n", Members(SpFpGroupTab));
          fprintf(ExF, "SFPGROUPS equ SPARSE_BASE + ($ - sqztab)\n");
-         fprintf(ExF, "SFPGROUP3 equ SFPGROUPS + 8 * 3\n");
+         fprintf(ExF, "SFPGROUP3 equ SFPGROUPS + 8*3\n");
       }
       AuxS = "\tdb ";
       for (int J = 0; J < 8; J++) fprintf(ExF, "%s%3d", AuxS, OpType[I + J] == 0? 0: ++X), AuxS = ",";
-      fprintf(ExF, "\t;; %X\n", I);
+      fprintf(ExF, "\t;; %x\n", I);
    }
 // Print out the cleanup tables.
    fprintf(ExF,
@@ -740,7 +737,7 @@ void PutTables(FILE *ExF) {
    );
    PutPairs(ExF, "wtab", StarSeq, StarOp, Stars);
    fprintf(ExF,
-      "N_WTAB\tequ ($ - wtab2) / 2\n"
+      "N_WTAB\tequ ($ - wtab2)/2\n"
       "\n"
       ";; --- Disassembler: table for operands which have a different mnemonic for\n"
       ";; --- their 32 bit versions (66h prefix).\n"
@@ -748,7 +745,7 @@ void PutTables(FILE *ExF) {
    );
    PutPairs(ExF, "ltabo", SlashSeq, SlashOp, Slashes);
    fprintf(ExF,
-      "N_LTABO\tequ ($ - ltabo2) / 2\n"
+      "N_LTABO\tequ ($ - ltabo2)/2\n"
       "\n"
       ";; --- Disassembler: table for operands which have a different mnemonic for\n"
       ";; --- their 32 bit versions (67h prefix).\n"
@@ -756,13 +753,13 @@ void PutTables(FILE *ExF) {
    );
    PutPairs(ExF, "ltaba", HashSeq, HashOp, Hashes);
    fprintf(ExF,
-      "N_LTABA\tequ ($ - ltaba2) / 2\n"
+      "N_LTABA\tequ ($ - ltaba2)/2\n"
       "\n"
       ";; --- Disassembler: table of lockable instructions\n"
       "\n"
    );
    PutDw(ExF, "locktab label word\n", LockTab, Locks);
-   fprintf(ExF, "N_LOCK\tequ ($ - locktab) / 2\n");
+   fprintf(ExF, "N_LOCK\tequ ($ - locktab)/2\n");
 }
 
 // Read and process files Op.key, Op.ord, Op.set and then dump DebugTab.inc.
@@ -788,7 +785,7 @@ int main(void) {
          }
          if (strcmp(S, NameTab[K]) == 0) break;
       }
-      KeyDict[KeyN].Value = K, KeyDict[KeyN].Width = strstr(S, "OP_ALL") != NULL? 2: strstr(S, "OP_R_ADD") != NULL? 8: 1;
+      KeyDict[KeyN].Value = K, KeyDict[KeyN].Width = strstr(S, "OpX") != NULL? 2: strstr(S, "_rx") != NULL? 8: 1;
       KeyN++;
    }
    fclose(KeyF);

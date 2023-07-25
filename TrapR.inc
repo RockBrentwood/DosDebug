@@ -1,42 +1,42 @@
 
-;--- debugger entries for real-mode
-;--- a) program termination
-;--- b) exceptions ( 0, 1, 3, 6, 7, C, D, E )
-;--- c) sysreq pressed
+;; --- debugger entries for real-mode
+;; --- a) program termination
+;; --- b) exceptions (0, 1, 3, 6, 7, C, D, E)
+;; --- c) sysreq pressed
 
-;--- v2.0: code changed so [run_int] is set only if entry is from
-;--- debuggee. If debugger is reentered because of an exception inside
-;--- the debugger, this must not be modified anymore.
+;; --- v2.0: code changed so [run_int] is set only if entry is from
+;; --- debuggee. If debugger is reentered because of an exception inside
+;; --- the debugger, this must not be modified anymore.
 
 if INT22
-;--- debugger's int 22h (program termination) handler.
-;--- there's no need to preserve registers.
+;; --- debugger's int 22h (program termination) handler.
+;; --- there's no need to preserve registers.
 
 intr22:
 	cli
-	mov cs:[run_int], INT22MSG	;remember interrupt type
-	mov cs:[lastcmd], offset dmycmd
+	mov CS:[run_int], INT22MSG	;; remember interrupt type
+	mov CS:[lastcmd], offset dmycmd
 	jmp intrtn_progtrm
 
 endif
 
-;--- Interrupt 0 (divide error) handler.
+;; --- Interrupt 0 (divide error) handler.
 
 intr00:
-	mov cs:[run_int], EXC00MSG	;remember interrupt type
-	jmp intrtnr		;jump to register saving routine
+	mov CS:[run_int], EXC00MSG	;; remember interrupt type
+	jmp intrtnr		;; jump to register saving routine
 
 
-;--- Interrupt 1 (single-step interrupt) handler.
+;; --- Interrupt 1 (single-step interrupt) handler.
 
 intr01:
-	mov cs:[run_int], EXC01MSG
+	mov CS:[run_int], EXC01MSG
 	jmp intrtnr
 
 if CATCHINT06
 
 intr06:
-	mov cs:[run_int], EXC06MSG
+	mov CS:[run_int], EXC06MSG
 	jmp intrtnr
 
 endif
@@ -44,12 +44,12 @@ endif
 if CATCHINT07
 
 intr07:
-	cmp cs:[bInDbg],0
+	cmp CS:[bInDbg],0
 	jz @F
-	mov ax, EXC07MSG
+	mov AX, EXC07MSG
 	jmp ue_intxx
 @@:
-	mov cs:[run_int], EXC07MSG
+	mov CS:[run_int], EXC07MSG
 	jmp intrtnr
 
 endif
@@ -57,27 +57,27 @@ endif
 if CATCHINT0C
 
 NotOurInt0C:
-	jmp cs:[oldi0C]
+	jmp CS:[oldi0C]
 
 intr0C:
  if MCLOPT
-	cmp cs:[bMPicB], 20h
+	cmp CS:[bMPicB], 20h
 	jae @F
  endif
-	push ax
-	mov al, 0Bh		; get ISR mask from PIC
-	out 20h, al
-	in al, 20h
-	test al, 10h	; IRQ4 (int 0Ch) occured?
-	pop ax
+	push AX
+	mov AL, 0Bh		;; get ISR mask from PIC
+	out 20h, AL
+	in AL, 20h
+	test AL, 10h	;; IRQ4 (int 0Ch) occured?
+	pop AX
 	jnz NotOurInt0C
 @@:
-	cmp cs:[bInDbg],0
+	cmp CS:[bInDbg],0
 	jz @F
-	mov ax, EXC0CMSG
+	mov AX, EXC0CMSG
 	jmp ue_intxx
 @@:
-	mov cs:[run_int], EXC0CMSG
+	mov CS:[run_int], EXC0CMSG
 	jmp intrtnr
 
 endif
@@ -85,27 +85,27 @@ endif
 if CATCHINT0D
 
 NotOurInt0D:
-	jmp cs:[oldi0D]
+	jmp CS:[oldi0D]
 
 intr0D:
  if MCLOPT
-	cmp cs:[bMPicB], 20h
+	cmp CS:[bMPicB], 20h
 	jae @F
  endif
-	push ax
-	mov al, 0Bh		; get ISR mask from PIC
-	out 20h, al
-	in al, 20h
-	test al, 20h	; IRQ5 (int 0Dh) occured?
-	pop ax
+	push AX
+	mov AL, 0Bh		;; get ISR mask from PIC
+	out 20h, AL
+	in AL, 20h
+	test AL, 20h	;; IRQ5 (int 0Dh) occured?
+	pop AX
 	jnz NotOurInt0D
 @@:
-	cmp cs:[bInDbg],0
+	cmp CS:[bInDbg],0
 	jz @F
-	mov ax, EXC0DMSG
+	mov AX, EXC0DMSG
 	jmp ue_intxx
 @@:
-	mov cs:[run_int], EXC0DMSG
+	mov CS:[run_int], EXC0DMSG
 	jmp intrtnr
 
 endif
@@ -113,55 +113,55 @@ endif
 if CATCHSYSREQ
 
 @@:
-	jmp cs:[oldisrq]
+	jmp CS:[oldisrq]
 intrsrq:
-	test cs:[bInDbg], 1
+	test CS:[bInDbg], 1
 	jnz @B
  if SYSRQINT eq 15h
-	cmp ax, 8501h	;sysreq released?
+	cmp AX, 8501h	;; sysreq released?
 	jnz @B
  else
 	pushf
-	push cs
+	push CS
 	call @B
-	push ds
-	push ax
-	xor ax, ax
-	mov ds, ax
-	pop ax
-	test byte ptr ds:[418h], 4	;bit should be set while sysreq is pressed
-	pop ds
+	push DS
+	push AX
+	xor AX, AX
+	mov DS, AX
+	pop AX
+	test byte ptr DS:[418h], 4	;; bit should be set while sysreq is pressed
+	pop DS
 	jnz @F
 	iret
 @@:
  endif
  if _PM
-	inc cs:[bNoHook2F]	; disable hooking
+	inc CS:[bNoHook2F]	;; disable hooking
  endif
-	mov cs:[run_int], SYSRQMSG	;remember interrupt type
+	mov CS:[run_int], SYSRQMSG	;; remember interrupt type
 	jmp intrtnr
 
 endif
 
-;--- Interrupt 3 (breakpoint interrupt) handler.
+;; --- Interrupt 3 (breakpoint interrupt) handler.
 
 intr03:
-	mov cs:[run_int], EXC03MSG	;remember interrupt type
+	mov CS:[run_int], EXC03MSG	;; remember interrupt type
 
 intrtnr proc
 
-	cli					;just in case
-	pop cs:[regs.rIP]	;recover things from stack
-	pop cs:[regs.rCS]
-	pop cs:[regs.rFL]
-intrtn_progtrm::		;<--- int 22h
-	mov cs:[regs.rSS],ss;save stack position
+	cli					;; just in case
+	pop CS:[regs.rIP]	;; recover things from stack
+	pop CS:[regs.rCS]
+	pop CS:[regs.rFL]
+intrtn_progtrm::		;; <--- int 22h
+	mov CS:[regs.rSS],SS	;; save stack position
 	sizeprf
-	mov cs:[regs.rSP],sp
-	mov sp,cs			; "push cs", "pop ss" without modifying [SP-2]
-	mov ss,sp
-	mov sp,offset regs.rSS
+	mov CS:[regs.rSP],SP
+	mov SP,CS			;; "push CS", "pop SS" without modifying [SP-2]
+	mov SS,SP
+	mov SP,offset regs.rSS
 
-;--- fall thru to intrtn
+;; --- fall thru to intrtn
 
 intrtnr endp

@@ -1,0 +1,686 @@
+## The 80x86 Family OpCode Summary
+## ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## The main instruction set description file in opcode order.
+## The syntax is as follows:
+##	[Op][A|D][L][∙]│[∘][_]Id[(/|#|*)Id]│Mode
+## Opcode Layout:
+##	Op	The opcode byte(s) of the instruction field, consisting of:
+##		HH	The first opcode byte
+##		hh	A possible second opcode byte, for opcode groups
+##		/r	The r part in an additional xrm byte.
+##	A	This variant is to be used only by the assember.
+##	D	This variant is to be used only by the disassembler.
+##	L	This is a lockable instruction.
+##	∙	The processor extension on which this instruction first appeared.
+##		➊,➋,➌,➍,➎,➏, respectively for 80186, 80286, 80386, 80486, 80586/Pentium, 80686
+##		Here n may be 1 through 6.
+## Opcode Names:
+##	∘	Special cases: ➀ for db, ➁ for dw, ➂ for dd, ➃ for org, ➄ for 32-bit operand prefix, and ➅ for aad or aam.
+##	_	The line applies only to the assembler.
+##		(Note: aad/aam was originally ^0, while the others were originally ^1, ^2, ^3, ^4 and ^5).
+##	Id	The first op code mnemonic.
+##	/Id	The 32-bit variant that the 146o prefix switches between.
+##	#Id	The 32-bit variant that the 147o prefix switches between.
+##	*Id	The preceding opcode occurs with a wait instruction; the following, without.
+## Operand Mode (originally from Op.key):
+##	One of the following:
+##	∙	A comma-separated list of 0, 1, 2 or more argument templates
+##	∙	: to indicate a segment prefix
+##	∙	& to indicate an opcode prefix
+## The following comment was listed under "mov": f=mov a,[mem], G=mov [mem],a  4=mov a,r
+## References:
+##	Instruction set from the Intel Pentium Family User's Manual, Volume 3: Architecture and Programming Manual.
+##	Information on earlier processors from various Intel and third party documentation.
+##	Information on new Pentium Pro <TM> instructions from
+##		http://x86.metronet.com (http://198.215.126.12).
+## History:
+## v1.09:
+## ―	"loop" opcode has no "ecx" operand anymore in 32bit.
+## v1.10:
+## ―	"loopw", "loopzw" and "loopnzw" variants added.
+## v1.18:
+## ―	"fldenvw", "fldenvd", "fstenvw", "fstenvd" variants added.
+## ―	"fsavew", "fsaved", "frstorw", "frstord" variants added.
+## ―	"movd" and "movq" added.
+##
+## These are the keys for the operand modes.
+## v1.09:
+## ―	For D and E: w changed to v.
+## ―	For S8: _Db changed to _Ds.
+## ―	The key L isn't used anymore. (It was used for 32bit LOOPx.)
+## v1.18:
+## ―	The keys are rearranged, they are now always 2 hex digits.
+## ―	';' comments added
+##
+## These operand types need to be combined with a size flag.
+## The sizes are:
+##	b	;; 1-byte
+##	w	;; 2-bytes
+##	d	;; 4-bytes
+##	v	;; 2/4-bytes, based on the operand size mode.
+##	x	;; 1/2/4-bytes, in most cases: the size is determined by the low-order bit of the opcode.
+##	q	;; 8-bytes
+## The order of the groups must match the items in asm_jmp1, bittab and dis_jmp1:
+##	_Ix,_Iv,_Ib,_Iw		;; Immediate.
+##	_Ex,_Ev,_Eb,_Ew,_Ed,_Eq	;; Register/Memory, determined from xr in xrm: memory if x ≠ 3, register if x ≡ 3.
+##	_Mv,_Mw,_Md		;; Memory (but not Register), determined from xm in xrm, with x ≠ 3.
+##	_Xv,_Xd			;; Register (but not Memory), determined from m in xrm, with x ≡ 3.
+##	_Rx,_Rv,_Rw		;; Register, determined from r in xrm.
+##	_rv,_rb,_rd		;; Register, determined from the low-order octal digit of the instruction byte.
+##	_Ax,_Av,_Aw		;; Accumulator: AL or AX or EAX.
+## These don't need a size, as they already imply the required size.
+##	_Q	;; qword memory (obsolete?)
+##	_MF	;; float memory
+##	_MD	;; double-precision floating memory
+##	_MLD	;; tbyte memory
+##	_Mx	;; memory (size indeterminate)
+##	_Mf	;; memory far16/far32 pointer
+##	_Ox	;; near 16 immediate, i.e. memory offset; e.g., [1234]
+##	_Af	;; far16/far32 immediate
+##	_Jb	;; byte address relative to IP
+##	_Jv	;; word or dword address relative to IP
+##	_ST1	;; check for ST(1)
+##	_STi	;; ST(I)
+##	_CRx	;; CRx
+##	_DRx	;; DRx
+##	_TRx	;; TRx
+##	_Rs	;; segment register
+##	_Ds	;; sign extended immediate byte
+##	_Db	;; immediate byte (other args may be (d)word)
+##	_MMx	;; MMx
+##	_N	;; set flag to always show the size
+##	_1	;; 1 (simple "string" ops from here on)
+##	_3	;; 3
+##	_DX	;; DX
+##	_CL	;; CL
+##	_ST	;; ST (top of coprocessor stack)
+##	_CS	;; CS
+##	_DS	;; DS
+##	_ES	;; ES
+##	_FS	;; FS
+##	_GS	;; GS
+##	_SS	;; SS
+##	_Str	;; first "string" op
+##
+## These are the order preferences that must be respected by the assembler.
+## Each (non-comment) line should be a pair of keys.
+## The table-generating program will check that the order of instruction variants
+## for each instruction in the file "Op.set" is compatible with each pair.
+## If not, it will scream.
+## They have been incuded the orderings, below, seen in the actual listings.
+##
+## v1.09:
+## ―	first entry changed from (_Ax, _Ix) ⇒ (_Ev, _Ds) to (_Ev, _Ds) ⇒ (_Ax, _Ix).
+##
+## Ordering Constraints (originally from Op.ord):
+##	(_Ev, _Ds) ⇒ (_Ax, _Ix)
+##	(_Ev, _Ds) ⇒ (_Ex, _Ix)
+##	(_rv) → (_Ex)
+##	(_Rv, _Ev, _Ds) → (_Rv, _Ev, _Iv)
+##	(_3) → (_Ib)
+##	(_Jb) → (_Jv)
+##	(_rb, _Ib) → (_Ex, _Ix)
+##	(_rv, _Iv) → (_Ex, _Ix)
+##	(_Ax, _Ox) → (_Rx, _Ex)
+##	(_Ox, _Ax) → (_Ex, _Rx)
+##	(_rv) → (_Ev)
+##	(_Ev) → (_Mf)
+##	(_Ib) ⇒ (_Iv)
+##	(_Ex, _1) → (_Ex, _Db)
+##	(_Av, _rv) → (_Ex, _Rx)
+##	(_Av, _rv) → (_Rx, _Ex)
+##	(_rv, _Av) → (_Ex, _Rx)
+##	(_rv, _Av) → (_Rx, _Ex)
+##	(_Aw) → (_Mw)
+
+Opcode Table (originally from Op.set, combined with Op.key):
+         │➀_db             │
+         │➁_dw             │
+         │➂_dd             │
+         │➃_org            │
+00     L │  add            │ _Ex, _Rx
+02       │  add            │ _Rx, _Ex
+04       │  add            │ _Ax, _Ix
+06       │  push           │ _ES
+07       │  pop            │ _ES
+08     L │  or             │ _Ex, _Rx
+0a       │  or             │ _Rx, _Ex
+0c       │  or             │ _Ax, _Ix
+0e       │  push           │ _CS
+0f00/0  ➋│  sldt           │ _Ev
+0f00/1  ➋│  str            │ _Ew
+0f00/2  ➋│  lldt           │ _Ew
+0f00/3  ➋│  ltr            │ _Ew
+0f00/4  ➋│  verr           │ _Ew
+0f00/5  ➋│  verw           │ _Ew
+0f01/0  ➋│  sgdt           │ _Mx
+0f01/1  ➋│  sidt           │ _Mx
+0f01/2  ➋│  lgdt           │ _Mx
+0f01/3  ➋│  lidt           │ _Mx
+0f01/4  ➋│  smsw           │ _Ev
+0f01/6  ➋│  lmsw           │ _Ew
+0f01/7  ➍│  invlpg         │ _Mx
+0f02    ➋│  lar            │ _Rv, _Ev
+0f03    ➋│  lsl            │ _Rv, _Ev
+0f06    ➋│  clts           │
+0f08    ➍│  invd           │
+0f09    ➍│  wbinvd         │
+0f20    ➌│  mov            │ _Xd, _CRx
+0f21    ➌│  mov            │ _Xd, _DRx
+0f22    ➌│  mov            │ _CRx, _Xd
+0f23    ➌│  mov            │ _DRx, _Xd
+0f24    ➌│  mov            │ _Xd, _TRx
+0f26    ➌│  mov            │ _TRx, _Xd
+0f30    ➎│  wrmsr          │
+0f32    ➎│  rdmsr          │
+0f40    ➏│  cmovo          │ _Rv, _Ev
+0f41    ➏│  cmovno         │ _Rv, _Ev
+0f42    ➏│  cmovb          │ _Rv, _Ev
+0f42    ➏│ _cmovc          │ _Rv, _Ev
+0f42    ➏│ _cmovnae        │ _Rv, _Ev
+0f43    ➏│  cmovae         │ _Rv, _Ev
+0f43    ➏│ _cmovnb         │ _Rv, _Ev
+0f43    ➏│ _cmovnc         │ _Rv, _Ev
+0f44    ➏│ _cmove          │ _Rv, _Ev
+0f44    ➏│  cmovz          │ _Rv, _Ev
+0f45    ➏│ _cmovne         │ _Rv, _Ev
+0f45    ➏│  cmovnz         │ _Rv, _Ev
+0f46    ➏│  cmovbe         │ _Rv, _Ev
+0f46    ➏│ _cmovna         │ _Rv, _Ev
+0f47    ➏│  cmova          │ _Rv, _Ev
+0f47    ➏│ _cmovnbe        │ _Rv, _Ev
+0f48    ➏│  cmovs          │ _Rv, _Ev
+0f49    ➏│  cmovns         │ _Rv, _Ev
+0f4a    ➏│ _cmovp          │ _Rv, _Ev
+0f4a    ➏│  cmovpe         │ _Rv, _Ev
+0f4b    ➏│ _cmovnp         │ _Rv, _Ev
+0f4b    ➏│  cmovpo         │ _Rv, _Ev
+0f4c    ➏│  cmovl          │ _Rv, _Ev
+0f4c    ➏│ _cmovnge        │ _Rv, _Ev
+0f4d    ➏│  cmovge         │ _Rv, _Ev
+0f4d    ➏│ _cmovnl         │ _Rv, _Ev
+0f4e    ➏│  cmovle         │ _Rv, _Ev
+0f4e    ➏│ _cmovng         │ _Rv, _Ev
+0f4f    ➏│  cmovg          │ _Rv, _Ev
+0f4f    ➏│ _cmovnle        │ _Rv, _Ev
+0f6e    ➎│  movd           │ _MMx, _Ed
+0f6f    ➎│  movq           │ _MMx, _Eq
+0f77    ➎│  emms           │
+0f7e    ➎│  movd           │ _Ed, _MMx
+0f7f    ➎│  movq           │ _Eq, _MMx
+0f80    ➌│  jo             │ _Jv
+0f81    ➌│  jno            │ _Jv
+0f82    ➌│  jb             │ _Jv
+0f82    ➌│ _jc             │ _Jv
+0f82    ➌│ _jnae           │ _Jv
+0f83    ➌│  jae            │ _Jv
+0f83    ➌│ _jnb            │ _Jv
+0f83    ➌│ _jnc            │ _Jv
+0f84    ➌│ _je             │ _Jv
+0f84    ➌│  jz             │ _Jv
+0f85    ➌│ _jne            │ _Jv
+0f85    ➌│  jnz            │ _Jv
+0f86    ➌│  jbe            │ _Jv
+0f86    ➌│ _jna            │ _Jv
+0f87    ➌│  ja             │ _Jv
+0f87    ➌│ _jnbe           │ _Jv
+0f88    ➌│  js             │ _Jv
+0f89    ➌│  jns            │ _Jv
+0f8a    ➌│ _jp             │ _Jv
+0f8a    ➌│  jpe            │ _Jv
+0f8b    ➌│ _jnp            │ _Jv
+0f8b    ➌│  jpo            │ _Jv
+0f8c    ➌│  jl             │ _Jv
+0f8c    ➌│ _jnge           │ _Jv
+0f8d    ➌│  jge            │ _Jv
+0f8d    ➌│ _jnl            │ _Jv
+0f8e    ➌│  jle            │ _Jv
+0f8e    ➌│ _jng            │ _Jv
+0f8f    ➌│  jg             │ _Jv
+0f8f    ➌│ _jnle           │ _Jv
+0f90    ➌│  seto           │ _Eb
+0f91    ➌│  setno          │ _Eb
+0f92    ➌│  setb           │ _Eb
+0f92    ➌│ _setc           │ _Eb
+0f92    ➌│ _setnae         │ _Eb
+0f93    ➌│  setae          │ _Eb
+0f93    ➌│ _setnb          │ _Eb
+0f93    ➌│ _setnc          │ _Eb
+0f94    ➌│ _sete           │ _Eb
+0f94    ➌│  setz           │ _Eb
+0f95    ➌│ _setne          │ _Eb
+0f95    ➌│  setnz          │ _Eb
+0f96    ➌│  setbe          │ _Eb
+0f96    ➌│ _setna          │ _Eb
+0f97    ➌│  seta           │ _Eb
+0f97    ➌│ _setnbe         │ _Eb
+0f98    ➌│  sets           │ _Eb
+0f99    ➌│  setns          │ _Eb
+0f9a    ➌│ _setp           │ _Eb
+0f9a    ➌│  setpe          │ _Eb
+0f9b    ➌│ _setnp          │ _Eb
+0f9b    ➌│  setpo          │ _Eb
+0f9c    ➌│  setl           │ _Eb
+0f9c    ➌│ _setnge         │ _Eb
+0f9d    ➌│  setge          │ _Eb
+0f9d    ➌│ _setnl          │ _Eb
+0f9e    ➌│  setle          │ _Eb
+0f9e    ➌│ _setng          │ _Eb
+0f9f    ➌│  setg           │ _Eb
+0f9f    ➌│ _setnle         │ _Eb
+0fa0    ➌│  push           │ _FS
+0fa1    ➌│  pop            │ _FS
+0fa2    ➎│  cpuid          │
+0fa3    ➌│  bt             │ _Ev, _Rv
+0fa4    ➌│  shld           │ _Ev, _Rv, _Db
+0fa5    ➌│  shld           │ _Ev, _Rv, _CL
+0fa8    ➌│  push           │ _GS
+0fa9    ➌│  pop            │ _GS
+0faa    ➎│  rsm            │
+0fab   L➌│  bts            │ _Ev, _Rv
+0fac    ➌│  shrd           │ _Ev, _Rv, _Db
+0fad    ➌│  shrd           │ _Ev, _Rv, _CL
+0faf    ➌│  imul           │ _Rv, _Ev
+0fb0   L➍│  cmpxchg        │ _Ex, _Rx
+0fb2    ➌│  lss            │ _Rv, _Mv
+0fb3   L➌│  btr            │ _Ev, _Rv
+0fb4    ➌│  lfs            │ _Rv, _Mv
+0fb5    ➌│  lgs            │ _Rv, _Mv
+0fb6    ➌│  movzx          │ _Rv, _N, _Eb
+0fb7    ➌│  movzx          │ _Rv, _N, _Ew
+0fba/4  ➌│  bt             │ _Ev, _Db
+0fba/5 L➌│  bts            │ _Ev, _Db
+0fba/6 L➌│  btr            │ _Ev, _Db
+0fba/7 L➌│  btc            │ _Ev, _Db
+0fbb   L➌│  btc            │ _Ev, _Rv
+0fbc    ➌│  bsf            │ _Rv, _Ev
+0fbd    ➌│  bsr            │ _Rv, _Ev
+0fbe    ➌│  movsx          │ _Rv, _N, _Eb
+0fbf    ➌│  movsx          │ _Rv, _N, _Ew
+0fc0   L➍│  xadd           │ _Ex, _Rx
+0fc7/1  ➎│  cmpxchg8b      │ _Q
+0fc8    ➍│➄ bswap          │ _rd
+10     L │  adc            │ _Ex, _Rx
+12       │  adc            │ _Rx, _Ex
+14       │  adc            │ _Ax, _Ix
+16       │  push           │ _SS
+17       │  pop            │ _SS
+18     L │  sbb            │ _Ex, _Rx
+1a       │  sbb            │ _Rx, _Ex
+1c       │  sbb            │ _Ax, _Ix
+1e       │  push           │ _DS
+1f       │  pop            │ _DS
+20     L │  and            │ _Ex, _Rx
+22       │  and            │ _Rx, _Ex
+24       │  and            │ _Ax, _Ix
+26    A  │  seg            │ _ES
+26    A  │  es             │ :
+27       │  daa            │
+28     L │  sub            │ _Ex, _Rx
+2a       │  sub            │ _Rx, _Ex
+2c       │  sub            │ _Ax, _Ix
+2e    A  │  seg            │ _CS
+2e    A  │  cs             │ :
+2f       │  das            │
+30     L │  xor            │ _Ex, _Rx
+32       │  xor            │ _Rx, _Ex
+34       │  xor            │ _Ax, _Ix
+36    A  │  seg            │ _SS
+36    A  │  ss             │ :
+37       │  aaa            │
+38       │  cmp            │ _Ex, _Rx
+3a       │  cmp            │ _Rx, _Ex
+3c       │  cmp            │ _Ax, _Ix
+3e    A  │  seg            │ _DS
+3e    A  │  ds             │ :
+3f       │  aas            │
+40       │  inc            │ _rv
+48       │  dec            │ _rv
+50       │  push           │ _rv
+58       │  pop            │ _rv
+60      ➊│  pusha/pushad   │
+61      ➊│  popa/popad     │
+62      ➊│  bound          │ _Rv, _Mv
+63      ➋│  arpl           │ _Ew, _Rw
+64    A  │  seg            │ _FS
+64    A  │  fs             │ :
+65    A  │  seg            │ _GS
+65    A  │  gs             │ :
+68      ➊│  push           │ _Iv
+69      ➊│  imul           │ _Rv, _Ev, _Iv
+69    A ➊│  imul           │ _Xv, _Rv, _Iv
+6a      ➊│  push           │ _N, _Ds
+6b      ➊│  imul           │ _Rv, _Ev, _Ds
+6b    A ➊│  imul           │ _Xv, _Rv, _Ds
+6c      ➊│  insb           │
+6d      ➊│  insw/insd      │
+6e      ➊│  outsb          │
+6f      ➊│  outsw/outsd    │
+70       │  jo             │ _Jb
+71       │  jno            │ _Jb
+72       │  jb             │ _Jb
+72       │ _jc             │ _Jb
+72       │ _jnae           │ _Jb
+73       │  jae            │ _Jb
+73       │ _jnb            │ _Jb
+73       │ _jnc            │ _Jb
+74       │ _je             │ _Jb
+74       │  jz             │ _Jb
+75       │ _jne            │ _Jb
+75       │  jnz            │ _Jb
+76       │  jbe            │ _Jb
+76       │ _jna            │ _Jb
+77       │  ja             │ _Jb
+77       │ _jnbe           │ _Jb
+78       │  js             │ _Jb
+79       │  jns            │ _Jb
+7a       │ _jp             │ _Jb
+7a       │  jpe            │ _Jb
+7b       │ _jnp            │ _Jb
+7b       │  jpo            │ _Jb
+7c       │  jl             │ _Jb
+7c       │ _jnge           │ _Jb
+7d       │  jge            │ _Jb
+7d       │ _jnl            │ _Jb
+7e       │  jle            │ _Jb
+7e       │ _jng            │ _Jb
+7f       │  jg             │ _Jb
+7f       │ _jnle           │ _Jb
+80/7     │  cmp            │ _Ex, _Ix
+80/0   L │  add            │ _Ex, _Ix
+80/1   L │  or             │ _Ex, _Ix
+80/2   L │  adc            │ _Ex, _Ix
+80/3   L │  sbb            │ _Ex, _Ix
+80/4   L │  and            │ _Ex, _Ix
+80/5   L │  sub            │ _Ex, _Ix
+80/6   L │  xor            │ _Ex, _Ix
+83/7     │  cmp            │ _Ev, _Ds
+83/0   L │  add            │ _Ev, _Ds
+83/1   L │  or             │ _Ev, _Ds
+83/2   L │  adc            │ _Ev, _Ds
+83/3   L │  sbb            │ _Ev, _Ds
+83/4   L │  and            │ _Ev, _Ds
+83/5   L │  sub            │ _Ev, _Ds
+83/6   L │  xor            │ _Ev, _Ds
+84       │  test           │ _Ex, _Rx
+84    A  │  test           │ _Rx, _Ex
+86    AL │  xchg           │ _Ex, _Rx
+86     L │  xchg           │ _Rx, _Ex
+88       │  mov            │ _Ex, _Rx
+8a       │  mov            │ _Rx, _Ex
+8c       │  mov            │ _Ev, _Rs
+8d       │  lea            │ _Rv, _Mv
+8e       │  mov            │ _Rs, _Ev
+8f/0     │  pop            │ _Mv
+90       │  xchg           │ _Av, _rv
+90    A  │  xchg           │ _rv, _Av
+90       │  nop            │
+98       │  cbw/cwde       │
+99       │  cwd/cdq        │
+9a       │  call           │ _Af
+9b       │ _fwait          │
+9b       │  wait           │
+9c       │  pushf/pushfd   │
+9d       │  popf/popfd     │
+9e       │  sahf           │
+9f       │  lahf           │
+a0       │  mov            │ _Ax, _Ox
+a2       │  mov            │ _Ox, _Ax
+a4       │  movsb          │
+a5       │  movsw/movsd    │
+a6       │  cmpsb          │
+a7       │  cmpsw/cmpsd    │
+a8       │  test           │ _Ax, _Ix
+aa       │  stosb          │
+ab       │  stosw/stosd    │
+ac       │  lodsb          │
+ad       │  lodsw/lodsd    │
+ae       │  scasb          │
+af       │  scasw/scasd    │
+b0       │  mov            │ _rb, _Ib
+b8       │  mov            │ _rv, _Iv
+c0/0    ➊│  rol            │ _Ex, _Db
+c0/1    ➊│  ror            │ _Ex, _Db
+c0/2    ➊│  rcl            │ _Ex, _Db
+c0/3    ➊│  rcr            │ _Ex, _Db
+c0/4    ➊│ _sal            │ _Ex, _Db
+c0/4    ➊│  shl            │ _Ex, _Db
+c0/5    ➊│  shr            │ _Ex, _Db
+c0/7    ➊│  sar            │ _Ex, _Db
+c2       │  ret            │ _Iw
+c3       │  ret            │
+c4       │  les            │ _Rv, _Mv
+c5       │  lds            │ _Rv, _Mv
+c6/0     │  mov            │ _Ex, _Ix
+c8      ➊│  enter          │ _Iw, _Db
+c9      ➊│  leave          │
+ca       │  retf/retfd     │ _Iw
+cb       │  retf/retfd     │
+cc       │  int            │ _3
+cd       │  int            │ _Db
+ce       │  into           │
+cf       │  iret/iretd     │
+d0/0     │  rol            │ _Ex, _1
+d0/1     │  ror            │ _Ex, _1
+d0/2     │  rcl            │ _Ex, _1
+d0/3     │  rcr            │ _Ex, _1
+d0/4     │ _sal            │ _Ex, _1
+d0/4     │  shl            │ _Ex, _1
+d0/5     │  shr            │ _Ex, _1
+d0/7     │  sar            │ _Ex, _1
+d2/0     │  rol            │ _Ex, _CL
+d2/1     │  ror            │ _Ex, _CL
+d2/2     │  rcl            │ _Ex, _CL
+d2/3     │  rcr            │ _Ex, _CL
+d2/4     │ _sal            │ _Ex, _CL
+d2/4     │  shl            │ _Ex, _CL
+d2/5     │  shr            │ _Ex, _CL
+d2/7     │  sar            │ _Ex, _CL
+d4       │➅ aam            │ _Db
+d5       │➅ aad            │ _Db
+d7    A  │  xlat           │
+d7       │  xlatb          │
+d8/0     │  fadd           │ _MF
+d8/1     │  fmul           │ _MF
+d8/2     │  fcom           │ _MF
+d8/3     │  fcomp          │ _MF
+d8/4     │  fsub           │ _MF
+d8/5     │  fsubr          │ _MF
+d8/6     │  fdiv           │ _MF
+d8/7     │  fdivr          │ _MF
+d8c0     │  fadd           │ _ST, _STi
+d8c8     │  fmul           │ _ST, _STi
+d8d0     │  fcom           │ _ST1, _STi
+d8d1  A  │  fcom           │
+d8d8     │  fcomp          │ _ST1, _STi
+d8d9  A  │  fcomp          │
+d8e0     │  fsub           │ _ST, _STi
+d8e8     │  fsubr          │ _ST, _STi
+d8f0     │  fdiv           │ _ST, _STi
+d8f8     │  fdivr          │ _ST, _STi
+d9/0     │  fld            │ _MF
+d9/2     │  fst            │ _MF
+d9/3     │  fstp           │ _MF
+d9/4     │  fldenv         │ _Mx
+d9/4     │ _fldenvw/fldenvd│ _Mx
+d9/5     │  fldcw*fnldcw   │ _Mw
+d9/6     │  fstenv*fnstenv │ _Mx
+d9/6     │ _fstenvw/fstenvd│ _Mx
+d9/7     │  fstcw*fnstcw   │ _Mw
+d9c0     │  fld            │ _STi
+d9c8     │  fxch           │ _ST1, _STi
+d9c9  A  │  fxch           │
+d9d0     │  fnop           │
+d9e0     │  fchs           │
+d9e1     │  fabs           │
+d9e4     │  ftst           │
+d9e5     │  fxam           │
+d9e8     │  fld1           │
+d9e9     │  fldl2t         │
+d9ea     │  fldl2e         │
+d9eb     │  fldpi          │
+d9ec     │  fldlg2         │
+d9ed     │  fldln2         │
+d9ee     │  fldz           │
+d9f0     │  f2xm1          │
+d9f1     │  fyl2x          │
+d9f2     │  fptan          │
+d9f3     │  fpatan         │
+d9f4     │  fxtract        │
+d9f5    ➌│  fprem1         │
+d9f6     │  fdecstp        │
+d9f7     │  fincstp        │
+d9f8     │  fprem          │
+d9f9     │  fyl2xp1        │
+d9fa     │  fsqrt          │
+d9fb    ➌│  fsincos        │
+d9fc     │  frndint        │
+d9fd     │  fscale         │
+d9fe    ➌│  fsin           │
+d9ff    ➌│  fcos           │
+da/0     │  fiadd          │ _Md
+da/1     │  fimul          │ _Md
+da/2     │  ficom          │ _Md
+da/3     │  ficomp         │ _Md
+da/4     │  fisub          │ _Md
+da/5     │  fisubr         │ _Md
+da/6     │  fidiv          │ _Md
+da/7     │  fidivr         │ _Md
+dac0    ➏│  fcmovb         │ _ST, _STi
+dac0    ➏│ _fcmovnae       │ _ST, _STi
+dac8    ➏│  fcmove         │ _ST, _STi
+dac8    ➏│ _fcmovz         │ _ST, _STi
+dad0    ➏│  fcmovbe        │ _ST, _STi
+dad0    ➏│ _fcmovna        │ _ST, _STi
+dad8    ➏│  fcmovu         │ _ST, _STi
+dae9    ➌│  fucompp        │
+db/0     │  fild           │ _Md
+db/2     │  fist           │ _Md
+db/3     │  fistp          │ _Md
+db/5     │  fld            │ _MLD
+db/7     │  fstp           │ _MLD
+dbc0    ➏│ _fcmovae        │ _ST, _STi
+dbc0    ➏│  fcmovnb        │ _ST, _STi
+dbc8    ➏│  fcmovne        │ _ST, _STi
+dbc8    ➏│ _fcmovnz        │ _ST, _STi
+dbd0    ➏│ _fcmova         │ _ST, _STi
+dbd0    ➏│  fcmovnbe       │ _ST, _STi
+dbd8    ➏│  fcmovnu        │ _ST, _STi
+dbe0     │  feni*fneni     │
+dbe1     │  fdisi*fndisi   │
+dbe2     │  fclex*fnclex   │
+dbe3     │  finit*fninit   │
+dbe4    ➋│  fsetpm*fnsetpm │
+dbe8    ➏│  fucomi         │ _ST1, _STi
+dbe9  A ➏│  fucomi         │
+dbf0    ➏│  fcomi          │ _ST1, _STi
+dbf1  A ➏│  fcomi          │
+dc/0     │  fadd           │ _MD
+dc/1     │  fmul           │ _MD
+dc/2     │  fcom           │ _MD
+dc/3     │  fcomp          │ _MD
+dc/4     │  fsub           │ _MD
+dc/5     │  fsubr          │ _MD
+dc/6     │  fdiv           │ _MD
+dc/7     │  fdivr          │ _MD
+dcc0     │  fadd           │ _STi, _ST
+dcc8     │  fmul           │ _STi, _ST
+dce0     │  fsubr          │ _STi, _ST
+dce8     │  fsub           │ _STi, _ST
+dcf0     │  fdivr          │ _STi, _ST
+dcf8     │  fdiv           │ _STi, _ST
+dd/0     │  fld            │ _MD
+dd/2     │  fst            │ _MD
+dd/3     │  fstp           │ _MD
+dd/4     │  frstor         │ _Mx
+dd/4     │ _frstorw/frstord│ _Mx
+dd/6     │  fsave*fnsave   │ _Mx
+dd/6     │ _fsavew/fsaved  │ _Mx
+dd/7     │  fstsw*fnstsw   │ _Mw
+ddc0     │  ffree          │ _STi
+ddd0     │  fst            │ _STi
+ddd8     │  fstp           │ _STi
+dde0    ➌│  fucom          │ _ST1, _STi
+dde1  A ➌│  fucom          │
+dde8    ➌│  fucomp         │ _ST1, _STi
+dde9  A ➌│  fucomp         │
+de/0     │  fiadd          │ _Mw
+de/1     │  fimul          │ _Mw
+de/2     │  ficom          │ _Mw
+de/3     │  ficomp         │ _Mw
+de/4     │  fisub          │ _Mw
+de/5     │  fisubr         │ _Mw
+de/6     │  fidiv          │ _Mw
+de/7     │  fidivr         │ _Mw
+dec0     │  faddp          │ _ST1, _STi, _ST
+dec1  A  │  faddp          │
+dec8     │  fmulp          │ _ST1, _STi, _ST
+dec9  A  │  fmulp          │
+ded9     │  fcompp         │
+dee0     │  fsubrp         │ _ST1, _STi, _ST
+dee1  A  │  fsubrp         │
+dee8     │  fsubp          │ _ST1, _STi, _ST
+dee9  A  │  fsubp          │
+def0     │  fdivrp         │ _ST1, _STi, _ST
+def1  A  │  fdivrp         │
+def8     │  fdivp          │ _ST1, _STi, _ST
+def9  A  │  fdivp          │
+df/0     │  fild           │ _Mw
+df/2     │  fist           │ _Mw
+df/3     │  fistp          │ _Mw
+df/4     │  fbld           │ _MLD
+df/5     │  fild           │ _Q
+df/6     │  fbstp          │ _MLD
+df/7     │  fistp          │ _Q
+dfe0     │  fstsw*fnstsw   │ _Aw
+dfe8    ➏│  fucomip        │ _ST1, _STi
+dfe9  A ➏│  fucomip        │
+dff0    ➏│  fcomip         │ _ST1, _STi
+dff1  A ➏│  fcomip         │
+e0       │ _loopne         │ _Jb
+e0       │ _loopnew#loopned│ _Jb
+e0       │ _loopnz         │ _Jb
+e0       │  loopnzw#loopnzd│ _Jb
+e1       │ _loope          │ _Jb
+e1       │ _loopew#looped  │ _Jb
+e1       │ _loopz          │ _Jb
+e1       │  loopzw#loopzd  │ _Jb
+e2       │ _loop           │ _Jb
+e2       │  loopw#loopd    │ _Jb
+e3       │  jcxz#jecxz     │ _Jb
+e4       │  in             │ _Ax, _Db
+e6       │  out            │ _Db, _Ax
+e8       │  call           │ _Jv
+e9       │  jmp            │ _Jv
+ea       │  jmp            │ _Af
+eb       │  jmp            │ _Jb
+ec       │  in             │ _Ax, _DX
+ee       │  out            │ _DX, _Ax
+f0       │  lock           │ &
+f2       │  repne          │ &
+f3       │  rep            │ &
+f3       │  repe           │ &
+f4       │  hlt            │
+f5       │  cmc            │
+f6/0     │  test           │ _Ex, _Ix
+f6/2   L │  not            │ _Ex
+f6/3   L │  neg            │ _Ex
+f6/4     │  mul            │ _Ex
+f6/5     │  imul           │ _Ex
+f6/6     │  div            │ _Ex
+f6/7     │  idiv           │ _Ex
+f8       │  clc            │
+f9       │  stc            │
+fa       │  cli            │
+fb       │  sti            │
+fc       │  cld            │
+fd       │  std            │
+fe/0   L │  inc            │ _Ex
+fe/1   L │  dec            │ _Ex
+ff/0  DL │  inc            │ _Ex
+ff/1  DL │  dec            │ _Ex
+ff/2     │  call           │ _Ev
+ff/3     │  call           │ _Mf
+ff/4     │  jmp            │ _Ev
+ff/5     │  jmp            │ _Mf
+ff/6     │  push           │ _Ev

@@ -1,13 +1,13 @@
 
-;--- debugger entries for DPMI protected-mode
-;--- exceptions ( 0, 1, 3, 6, 7, C, D, E )
+;; --- debugger entries for DPMI protected-mode
+;; --- exceptions (0, 1, 3, 6, 7, C, D, E)
 
-;--- stack frames DPMI exception handlers 16/32-bit
+;; --- stack frames DPMI exception handlers 16/32-bit
 
 EXFR16 struc
-		dw 8 dup (?)	; pusha
+		dw 8 dup (?)	;; pusha
 wMsg	dw ?
-		dw 2 dup (?)	; far16 return to DPMI
+		dw 2 dup (?)	;; far16 return to DPMI
 wErrC	dw ?
 rIP		dw ?
 rCS		dw ?
@@ -17,9 +17,9 @@ rSS		dw ?
 EXFR16 ends
 
 EXFR32 struc
-		dd 8 dup (?)	; pushad
+		dd 8 dup (?)	;; pushad
 wMsg	dw ?
-		dd 2 dup (?)	; far32 return to DPMI
+		dd 2 dup (?)	;; far32 return to DPMI
 dwErrC	dd ?
 rEIP	dd ?
 rCS		dw ?
@@ -32,51 +32,51 @@ EXFR32 ends
 
 excxx_16:
 	pusha
-	mov bp,sp
-	push ds
-	mov ds,cs:[dssel]
-	mov ax,[bp].EXFR16.rIP
-	mov bx,[bp].EXFR16.rCS
-	mov cx,[bp].EXFR16.rFL
-	mov dx,[bp].EXFR16.rSP
-	mov si,[bp].EXFR16.rSS
-	mov di,[bp].EXFR16.wMsg
-	mov [bp].EXFR16.rCS, cs
-	mov [bp].EXFR16.rSS, ds
-	cmp [bInDbg],0				;did the exception occur inside DEBUG?
+	mov BP,SP
+	push DS
+	mov DS,CS:[dssel]
+	mov AX,[BP].EXFR16.rIP
+	mov BX,[BP].EXFR16.rCS
+	mov CX,[BP].EXFR16.rFL
+	mov DX,[BP].EXFR16.rSP
+	mov SI,[BP].EXFR16.rSS
+	mov DI,[BP].EXFR16.wMsg
+	mov [BP].EXFR16.rCS, CS
+	mov [BP].EXFR16.rSS, DS
+	cmp [bInDbg],0				;; did the exception occur inside DEBUG?
 	jz isdebuggee16
 if EXCCSIP
-	mov si, bx
+	mov SI, BX
 endif
-	mov [bp].EXFR16.rIP,offset ue_intx
-	mov bx, [top_sp]
-	sub bx, 3*2
-	mov [bx+0], di
+	mov [BP].EXFR16.rIP,offset ue_intx
+	mov BX, [top_sp]
+	sub BX, 3*2
+	mov [BX+0], DI
 if EXCCSIP
-	mov [bx+2], si
-	mov [bx+4], ax
+	mov [BX+2], SI
+	mov [BX+4], AX
 endif
-	mov [bp].EXFR16.rSP, bx
-	and byte ptr [bp].EXFR16.rFL+1, not 1	;reset TF
-	pop ax
+	mov [BP].EXFR16.rSP, BX
+	and byte ptr [BP].EXFR16.rFL+1, not 1	;; reset TF
+	pop AX
 	jmp back2dpmi16
 isdebuggee16:
-	mov [bp].EXFR16.rIP, offset intrtn
-	and byte ptr [bp].EXFR16.rFL+1, not 3	;reset IF + TF
-	mov [bp].EXFR16.rSP, offset regs.rSS
-	mov [regs.rIP],ax
-	mov [regs.rCS],bx
-	mov [regs.rFL],cx
-	mov [regs.rSP],dx
-	mov [regs.rSS],si
-	mov [run_intw],di
-;	pop ax
-;	mov [regs.rDS],ax
-;	mov ds,ax
-	pop ds
+	mov [BP].EXFR16.rIP, offset intrtn
+	and byte ptr [BP].EXFR16.rFL+1, not 3	;; reset IF + TF
+	mov [BP].EXFR16.rSP, offset regs.rSS
+	mov [regs.rIP],AX
+	mov [regs.rCS],BX
+	mov [regs.rFL],CX
+	mov [regs.rSP],DX
+	mov [regs.rSS],SI
+	mov [run_intw],DI
+;;	pop AX
+;;	mov [regs.rDS],AX
+;;	mov DS,AX
+	pop DS
 back2dpmi16:
 	popa
-	add sp, 2
+	add SP, 2
 	retf
 
 exc00:
@@ -109,74 +109,74 @@ exc0d:
 exc0e:
 	push EXC0EMSG
 exc_xx:
-	cmp cs:[dpmi32],0
+	cmp CS:[dpmi32],0
 	jz excxx_16
 
 	.386
 
 	pushad
-	mov ebp,esp
-	push ds
-	mov ds,cs:[dssel]
-	mov eax,[ebp].EXFR32.rEIP
-	mov bx, [ebp].EXFR32.rCS
-	mov ecx,[ebp].EXFR32.rEFL
-	mov edx,[ebp].EXFR32.rESP
-	mov si, [ebp].EXFR32.rSS
-	mov di, [ebp].EXFR32.wMsg
-	mov [ebp].EXFR32.rCS, cs
-	mov [ebp].EXFR32.rSS, ds
-	cmp [bInDbg],0	;did the exception occur inside DEBUG?
+	mov EBP,ESP
+	push DS
+	mov DS,CS:[dssel]
+	mov EAX,[EBP].EXFR32.rEIP
+	mov BX, [EBP].EXFR32.rCS
+	mov ECX,[EBP].EXFR32.rEFL
+	mov EDX,[EBP].EXFR32.rESP
+	mov SI, [EBP].EXFR32.rSS
+	mov DI, [EBP].EXFR32.wMsg
+	mov [EBP].EXFR32.rCS, CS
+	mov [EBP].EXFR32.rSS, DS
+	cmp [bInDbg],0	;; did the exception occur inside DEBUG?
 	jz isdebuggee32
 if EXCCSIP
-;--- it's assumed that an exception in DEBUG is always in 16-bit code,
-;--- but this isn't necessarily true, since the debuggee may have hooked
-;--- exceptions. Since v2.0, this is less probable, because DebugX will
-;--- always restore exception handlers 0D/0E on entry.
-	mov si, bx
+;; --- it's assumed that an exception in DEBUG is always in 16-bit code,
+;; --- but this isn't necessarily true, since the debuggee may have hooked
+;; --- exceptions. Since v2.0, this is less probable, because DebugX will
+;; --- always restore exception handlers 0D/0E on entry.
+	mov SI, BX
 endif
-	mov [ebp].EXFR32.rEIP,offset ue_intx
-	movzx ebx,[top_sp]
+	mov [EBP].EXFR32.rEIP,offset ue_intx
+	movzx EBX,[top_sp]
 if EXCCSIP
  if EXCCSEIP
-	sub bx, 2*2+4
+	sub BX, 2*2+4
  else
-	sub bx, 3*2
+	sub BX, 3*2
  endif
 else
-	sub bx, 2
+	sub BX, 2
 endif
-	mov [bx+0], di	; msg
+	mov [BX+0], DI	;; msg
  if EXCCSIP
-	mov [bx+2], si	; cs
+	mov [BX+2], SI	;; CS
   if EXCCSEIP
-	mov [bx+4], eax
+	mov [BX+4], EAX
   else
-	mov [bx+4], ax
+	mov [BX+4], AX
   endif
  endif
-	mov [ebp].EXFR32.rESP, ebx
-	and byte ptr [ebp].EXFR32.rEFL+1, not 1	;reset TF
-	pop ax
+	mov [EBP].EXFR32.rESP, EBX
+	and byte ptr [EBP].EXFR32.rEFL+1, not 1	;; reset TF
+	pop AX
 	jmp back2dpmi32
 isdebuggee32:
 	@dprintf "excxx: client exception"
-	mov [ebp].EXFR32.rEIP, offset intrtn
-	and byte ptr  [ebp].EXFR32.rEFL+1, not 3;reset IF + TF
-	mov [ebp].EXFR32.rESP, offset regs.rSS
-	mov dword ptr [regs.rIP], eax
-	mov [regs.rCS],bx
-;	mov dword ptr [regs.rFL], ecx	; preferable?
-	mov [regs.rFL],cx
-	mov dword ptr [regs.rSP], edx
-	mov [regs.rSS],si
-	mov [run_intw],di
-;	pop ax
-;	mov [regs.rDS],ax
-;	mov ds,ax
-	pop ds
+	mov [EBP].EXFR32.rEIP, offset intrtn
+	and byte ptr [EBP].EXFR32.rEFL+1, not 3	;; reset IF + TF
+	mov [EBP].EXFR32.rESP, offset regs.rSS
+	mov dword ptr [regs.rIP], EAX
+	mov [regs.rCS],BX
+;;	mov dword ptr [regs.rFL], ECX	;; preferable?
+	mov [regs.rFL],CX
+	mov dword ptr [regs.rSP], EDX
+	mov [regs.rSS],SI
+	mov [run_intw],DI
+;;	pop AX
+;;	mov [regs.rDS],AX
+;;	mov DS,AX
+	pop DS
 back2dpmi32:
 	popad
-	add sp, 2
+	add SP, 2
 	retd
 

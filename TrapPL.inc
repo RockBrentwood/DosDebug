@@ -1,13 +1,13 @@
 
-;--- debugger entries for ring0 long-mode
-;--- a) exceptions ( 0, 1, 3, 6, 7, C, D, E )
-;--- b) sysreq pressed
+;; --- debugger entries for ring0 long-mode
+;; --- a) exceptions (0, 1, 3, 6, 7, C, D, E)
+;; --- b) sysreq pressed
 
-;--- v2.0: code changed so [run_int] is set only if entry is from
-;--- debuggee. If debugger is reentered because of an exception inside
-;--- the debugger, this var must not be modified anymore.
+;; --- v2.0: code changed so [run_int] is set only if entry is from
+;; --- debuggee. If debugger is reentered because of an exception inside
+;; --- the debugger, this var must not be modified anymore.
 
-SKIPINTGPF equ 1	; ignore GPFs caused by INT xx
+SKIPINTGPF equ 1	;; ignore GPFs caused by INT xx
 
 	.386
 
@@ -36,99 +36,99 @@ wRet	dw ?
 		EXCFR <>
 CIIFR ends
 
-;--- check if at cs:(e)ip is an IOPL-sensitive instruction that
-;--- caused a GPF.
-;--- in: ESP = CIIFR
-;--- out: C if yes
+;; --- check if at CS:(E)IP is an IOPL-sensitive instruction that
+;; --- caused a GPF.
+;; --- in: ESP = CIIFR
+;; --- out: C if yes
 
 checkioplinstr proc
-	push ds
-	push ax
-	push esi
-	mov esi, [esp].CIIFR._eip
-	mov ds, word ptr [esp].CIIFR._cs
+	push DS
+	push AX
+	push ESI
+	mov ESI, [ESP].CIIFR._eip
+	mov DS, word ptr [ESP].CIIFR._cs
 	cld
-	lodsb ds:[esi]
-	cmp al, 0FAh	;CLI?
+	lodsb DS:[ESI]
+	cmp AL, 0FAh	;; CLI?
 	jz isiopl
-	cmp al, 0FBh	;STI?
+	cmp AL, 0FBh	;; STI?
 	jz isiopl
 if SKIPINTGPF
-	cmp al, 0CDh	;INT XX? ( causes GPF if gate's DPL=0 )
+	cmp AL, 0CDh	;; INT XX? (causes GPF if gate's DPL=0)
 	jz isiopl
 endif
 	jmp ci1
 @@:
-	lodsb ds:[esi]
+	lodsb DS:[ESI]
 ci1:
-	cmp al, 0F3h	;REP?
+	cmp AL, 0F3h	;; REP?
 	jz @B
-	cmp al, 066h	;size prefix?
+	cmp AL, 066h	;; size prefix?
 	jz @B
 
-;--- E4/E5/E6/E7? IN AL/AX,XX - OUT XX,AL/AX
-;--- EC/ED/EE/EF? IN AL/AX,DX - OUT DX,AL/AX
-;--- 6C/6D/6E/6F? INSB/INSW   - OUTSB/OUTSW
+;; --- E4/E5/E6/E7? IN AL/AX,XX - OUT XX,AL/AX
+;; --- EC/ED/EE/EF? IN AL/AX,DX - OUT DX,AL/AX
+;; --- 6C/6D/6E/6F? INSB/INSW   - OUTSB/OUTSW
 
-	and al, 0FCh
-	cmp al, 0E4h
+	and AL, 0FCh
+	cmp AL, 0E4h
 	jz isiopl
-	cmp al, 0ECh
+	cmp AL, 0ECh
 	jz isiopl
-	cmp al, 6Ch
+	cmp AL, 6Ch
 	jz isiopl
-	pop esi
-	pop ax
-	pop ds
+	pop ESI
+	pop AX
+	pop DS
 	clc
 	ret
 isiopl:
-	pop esi
-	pop ax
-	pop ds
+	pop ESI
+	pop AX
+	pop DS
 	stc
 	ret
 checkioplinstr endp
 
 endif
 
-;--- store value of cr2 in exc msg
+;; --- store value of cr2 in exc msg
 rendercr2:
 	cld
-	push es
-	push di
-	push eax
-	mov es, cs:[pspdbg]
-	mov di, offset exc0Ecr2
-	mov eax, cr2
+	push ES
+	push DI
+	push EAX
+	mov ES, CS:[pspdbg]
+	mov DI, offset exc0Ecr2
+	mov EAX, cr2
 	call hexdword
-	pop eax
-	pop di
-	pop es
+	pop EAX
+	pop DI
+	pop ES
 	ret
 
-;--- exceptions must be handled by 64-bit code.
+;; --- exceptions must be handled by 64-bit code.
 
 	.x64
 
 @DefEnt64 macro intno
 	pushw offset oldi&intno
 if &intno&h ge 8
-	pushw EXC&intno&MSG or ( intno&h shl 8 ) or 8000h
+	pushw EXC&intno&MSG or (intno&h shl 8) or 8000h
 	jmp [jmpv162]
 else
-	pushw EXC&intno&MSG or ( intno shl 8 )
+	pushw EXC&intno&MSG or (intno shl 8)
 	jmp [jmpv161]
 endif
 endm
 
 _TEXT64 segment
 
-intr00:				; divide error
+intr00:				;; divide error
 	@DefEnt64 00
-intr01:				; single-step interrupt
+intr01:				;; single-step interrupt
 	@DefEnt64 01
-intr03:				; breakpoint interrupt
+intr03:				;; breakpoint interrupt
 	@DefEnt64 03
 if CATCHINT06
 intr06:
@@ -161,176 +161,176 @@ if CATCHSYSREQ
  endif
 
 @@:
-	jmp cs:[oldisrq]
+	jmp CS:[oldisrq]
 intrsrq:
-	test cs:[bInDbg], 1
+	test CS:[bInDbg], 1
 	jnz @B
-;--- no way to call the real-mode IRQ handler from here. we check the sysreq
-;--- bit and, if set, read the kbd port direct, also sending EOI to the PIC.
-;--- Not really nice, but it works.
-	push ds
-	mov ds, cs:[wFlat]
-	test byte ptr ds:[418h], 4	; sysreq pressed?
-	pop ds
+;; --- no way to call the real-mode IRQ handler from here. we check the sysreq
+;; --- bit and, if set, read the kbd port direct, also sending EOI to the PIC.
+;; --- Not really nice, but it works.
+	push DS
+	mov DS, CS:[wFlat]
+	test byte ptr DS:[418h], 4	;; sysreq pressed?
+	pop DS
 	jz @B
-	push ax
-	in al, 60h
-	cmp al, 54h+80h		; sysreq released?
-	pop ax
+	push AX
+	in AL, 60h
+	cmp AL, 54h+80h		;; sysreq released?
+	pop AX
 	jnz @B
-	push ds
-	mov ds, cs:[wFlat]
-	and byte ptr ds:[418h], not 4
-	pop ds
-	push ax
-	mov al, 20h
-	out 20h, al
-	pop ax
+	push DS
+	mov DS, CS:[wFlat]
+	and byte ptr DS:[418h], not 4
+	pop DS
+	push AX
+	mov AL, 20h
+	out 20h, AL
+	pop AX
 	push SYSRQMSG or (1 shl 8)
 	jmp intr01ex
 endif
 
-;--- exceptions with error code
+;; --- exceptions with error code
 
 intrtnp2:
 if MCLOPT
-	cmp cs:[bMPicB], 20h
+	cmp CS:[bMPicB], 20h
 	jae intrtnp
 endif
 
-	push ax
+	push AX
 if 1
-;--- before checking the PIC, we check the status of EXCFR._cs
-;--- Since IRQs don't push error codes, this would be the
-;--- saved flags then. if IF and bit 1 aren't 1 (202h), it can't be
-;--- an IRQ.
-	mov ax, word ptr [esp+2].EXCFR._cs
-	and ax, 202h
-	cmp ax, 202h
+;; --- before checking the PIC, we check the status of EXCFR._cs
+;; --- Since IRQs don't push error codes, this would be the
+;; --- saved flags then. if IF and bit 1 aren't 1 (202h), it can't be
+;; --- an IRQ.
+	mov AX, word ptr [ESP+2].EXCFR._cs
+	and AX, 202h
+	cmp AX, 202h
 	clc
 	jnz @F
 endif
-	push cx
-	mov al, 0Bh		; get ISR mask from PIC
-	mov cl, byte ptr [esp+4].EXCFR.wMsg+1
-	out 20h, al
-	and cx, 7
-	in al, 20h
-	bt ax, cx
-	pop cx
+	push CX
+	mov AL, 0Bh		;; get ISR mask from PIC
+	mov CL, byte ptr [ESP+4].EXCFR.wMsg+1
+	out 20h, AL
+	and CX, 7
+	in AL, 20h
+	bt AX, CX
+	pop CX
 @@:
-	pop ax
+	pop AX
 	jnc intrtnp
-	and byte ptr [esp].EXCFR.wMsg+1, 7Fh	; no error code on stack
+	and byte ptr [ESP].EXCFR.wMsg+1, 7Fh	;; no error code on stack
 nostop:
-	push bx
-	mov bx,[esp+2].EXCFR.wOfsOld
-	push ds
-	mov ds, cs:[pspdbg]
-	push dword ptr [bx]
+	push BX
+	mov BX,[ESP+2].EXCFR.wOfsOld
+	push DS
+	mov DS, CS:[pspdbg]
+	push dword ptr [BX]
 	pop  dword ptr [jmpv64]
-	pop ds
-	pop bx
-	test byte ptr [esp].EXCFR.wMsg+1, 80h	; error code real or faked?
-	lea esp, [esp+2+2]						; skip msg + oldvec addr
+	pop DS
+	pop BX
+	test byte ptr [ESP].EXCFR.wMsg+1, 80h	;; error code real or faked?
+	lea ESP, [ESP+2+2]						;; skip msg + oldvec addr
 	jnz @F
-	add esp, 8
+	add ESP, 8
 @@:
-	jmp cs:[jmpv64]
+	jmp CS:[jmpv64]
 
-;--- exceptions without error code
+;; --- exceptions without error code
 intrtnp1:
-	pushd 0		; add a fake "error code" to the stack frame
-	push dword ptr [esp+4] ; ensure that msg + wOfsOld are on top of stack
+	pushd 0		;; add a fake "error code" to the stack frame
+	push dword ptr [ESP+4] ;; ensure that msg + wOfsOld are on top of stack
 
-;--- Common interrupt routine.
+;; --- Common interrupt routine.
 
 intrtnp proc
 
-	cmp cs:[bInDbg],0
+	cmp CS:[bInDbg],0
 	jz int_dbgee
-	pop ax		; get msg
+	pop AX		;; get msg
   if EXCCSIP
-	add esp, 2+8; skip wOfsOld + error code
-	pop ecx
-	add esp, 4	; skip high32 of rip
-	pop dx
+	add ESP, 2+8	;; skip wOfsOld + error code
+	pop ECX
+	add ESP, 4	;; skip high32 of rip
+	pop DX
   endif
-;	mov ss, cs:[pspdbg]
-;	mov sp, cs:[top_sp]
-	mov ss, cs:[wFlat]
-	mov esp, cs:[top_sp]
+;;	mov SS, CS:[pspdbg]
+;;	mov SP, CS:[top_sp]
+	mov SS, CS:[wFlat]
+	mov ESP, CS:[top_sp]
   if EXCCSIP
    if EXCCSEIP
-	push ecx	; eip
+	push ECX	;; EIP
    else
-	push cx		; ip
+	push CX		;; IP
    endif
-	push dx		; cs
+	push DX		;; CS
   endif
-	mov ah, 0
-	push ax		; msg
-	cmp al, EXC0EMSG
+	mov AH, 0
+	push AX		;; msg
+	cmp AL, EXC0EMSG
 	jnz ue_intx
 	call rendercr2
 	jmp ue_intx
 
 int_dbgee:
-;--- check vector traps (set/reset by VT/VC)
-	push ax
-	mov al, byte ptr [esp+2].EXCFR.wMsg+1
-	and ax, 1Fh
-	bt cs:[wTrappedExc], ax	; exception trapped?
-	pop ax
+;; --- check vector traps (set/reset by VT/VC)
+	push AX
+	mov AL, byte ptr [ESP+2].EXCFR.wMsg+1
+	and AX, 1Fh
+	bt CS:[wTrappedExc], AX	;; exception trapped?
+	pop AX
 	jnc nostop
 
 if CHKIOPL
-;--- check if GPF caused by running CLI/STI/IN/OUT in IOPL=0
-	cmp byte ptr [esp].EXCFR.wMsg, EXC0DMSG
+;; --- check if GPF caused by running CLI/STI/IN/OUT in IOPL=0
+	cmp byte ptr [ESP].EXCFR.wMsg, EXC0DMSG
 	jnz @F
-	test byte ptr [esp].EXCFR._efl+1, 30h	;IOPL==0?
+	test byte ptr [ESP].EXCFR._efl+1, 30h	;; IOPL==0?
 	jnz @F
-	push ax
-	lar ax, word ptr [esp+2].EXCFR._cs
-	test ah, 60h	; ring 0?
-	pop ax
+	push AX
+	lar AX, word ptr [ESP+2].EXCFR._cs
+	test AH, 60h	;; ring 0?
+	pop AX
 	jz @F
 	call checkioplinstr
-	jc nostop	; if yes, don't stop in debugger
+	jc nostop	;; if yes, don't stop in debugger
 @@:
 endif
 
-	push ds
-	mov ds, cs:[pspdbg]
+	push DS
+	mov DS, CS:[pspdbg]
 	pop [regs.rDS]
 	pop [run_intw]
 
-	add esp, 2		; skip wOfsOld
+	add ESP, 2		;; skip wOfsOld
 
-;--- the rest of the stack contents should be preserved ( for skip cmd )
+;; --- the rest of the stack contents should be preserved (for skip cmd)
 
 	pop [regs.dwErrCode]
-	add esp, 4
+	add ESP, 4
 	pop dword ptr [regs.rIP]
-	add esp, 4
+	add ESP, 4
 	pop [regs.rCS]
-	add esp, 4+2
+	add ESP, 4+2
 	pop dword ptr [regs.rFL]
-	add esp, 4
-	pop dword ptr [regs.rSP]			; pop ss:esp
-	add esp, 4
+	add ESP, 4
+	pop dword ptr [regs.rSP]			;; pop SS:ESP
+	add ESP, 4
 	pop [regs.rSS]
-	add esp, 4+2
+	add ESP, 4+2
 
-	mov [regs.r0Esp], esp
-	mov [regs.r0SS], ss
-	mov ss, [pspdbg]
-	mov esp, offset regs.rSS
-	mov ds, [regs.rDS]
+	mov [regs.r0Esp], ESP
+	mov [regs.r0SS], SS
+	mov SS, [pspdbg]
+	mov ESP, offset regs.rSS
+	mov DS, [regs.rDS]
 
 	.8086
 
-;--- fall thru to intrtn
+;; --- fall thru to intrtn
 
 intrtnp endp
 

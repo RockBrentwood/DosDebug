@@ -1,41 +1,41 @@
 
-;   Here is the start of the disassembly part of the program.
+;;  Here is the start of the disassembly part of the program.
 
-;--- flags variables preflags/preused
+;; --- flags variables preflags/preused
 
-PRESEG	equ 1		;segment prefix
-PREREP	equ 2		;rep prefixes
-PREREPZ	equ 4		;f3, not f2
-PRELOCK	equ 8		;lock prefix
-PRE32D	equ 10h		;flag for operand size (66h)
-PRE32A	equ 20h		;flag for address size (67h)
-PREWAIT	equ 40h		;prefix wait (not really a prefix)
-GOTREGM	equ 80h		;set if we have the reg/mem part
+PRESEG	equ 1		;; segment prefix
+PREREP	equ 2		;; rep prefixes
+PREREPZ	equ 4		;; f3, not f2
+PRELOCK	equ 8		;; lock prefix
+PRE32D	equ 10h		;; flag for operand size (66h)
+PRE32A	equ 20h		;; flag for address size (67h)
+PREWAIT	equ 40h		;; prefix wait (not really a prefix)
+GOTREGM	equ 80h		;; set if we have the reg/mem part
 
-;--- equates for disflags:
+;; --- equates for disflags:
 
-DIS_F_REPT		equ 1	;repeat after pop ss, etc.
-DIS_F_SHOW		equ 2	;show memory contents
-DIS_I_SHOW		equ 4	;there are memory contents to show
-DIS_I_UNUSED	equ 8	;(internal) print " (unused)"
-DIS_I_SHOWSIZ	equ 10h	;(internal) always show the operand size
-DIS_I_KNOWSIZ	equ 20h	;(internal) we know the operand size of instr.
-DIS_I_MEMACC	equ 80h	;(internal) we're just accessing a mem ref ( dumpreg )
+DIS_F_REPT		equ 1	;; repeat after pop SS, etc.
+DIS_F_SHOW		equ 2	;; show memory contents
+DIS_I_SHOW		equ 4	;; there are memory contents to show
+DIS_I_UNUSED	equ 8	;; (internal) print " (unused)"
+DIS_I_SHOWSIZ	equ 10h	;; (internal) always show the operand size
+DIS_I_KNOWSIZ	equ 20h	;; (internal) we know the operand size of instr.
+DIS_I_MEMACC	equ 80h	;; (internal) we're just accessing a mem ref (dumpreg)
 
-;--- define "general purpose register"
+;; --- define "general purpose register"
 DefGPR macro regist
 REG_&regist& equ ($ - rgnam816)/2
 	db "&regist&"
 endm
 
-;--- register table
-;---  0- 7: 8-bit registers
-;---  8-15: 16-bit registers
-;--- 16-23: 32-bit registers
+;; --- register table
+;; ---  0- 7: 8-bit registers
+;; ---  8-15: 16-bit registers
+;; --- 16-23: 32-bit registers
 
 REG_NO_GPR	equ 24
 
-;--- define "segment register"
+;; --- define "segment register"
 DefSR macro regist
 REG_&regist& equ REG_NO_GPR + ($ - segrgnam)/2
 	db "&regist&"
@@ -43,38 +43,38 @@ endm
 
 _DATA segment
 
-dis_n	dw 0		;number of bytes in instruction so far
-		dw 0		;must follow dis_n (will always remain 0)
-idxins	dw 0		;index of the instruction (unsqueezed)
-addrr	dw 0		;address in mod r/m byte (16bit only)
-sizeloc dw 0		;address of size words in output line
+dis_n	dw 0		;; number of bytes in instruction so far
+	dw 0		;; must follow dis_n (will always remain 0)
+idxins	dw 0		;; index of the instruction (unsqueezed)
+addrr	dw 0		;; address in mod r/m byte (16bit only)
+sizeloc dw 0		;; address of size words in output line
 
-;--- preflags and preused must be consecutive
-preflags db 0		;flags for prefixes found so far
-preused	db 0		;flags for prefixes used so far
+;; --- preflags and preused must be consecutive
+preflags db 0		;; flags for prefixes found so far
+preused	db 0		;; flags for prefixes used so far
 
-instru	db 0		;the main instruction byte
-rmsize	db 0		;<0 or 0 or >0 means mod r/m is 8 or 16 or 32
-segmnt	db 0		;segment determined by prefix (or otherwise)
-disflags db 0		;flags for the disassembler
-disflags2 db 0		;another copy of DIS_I_KNOWSIZ
+instru	db 0		;; the main instruction byte
+rmsize	db 0		;; <0 or 0 or >0 means mod r/m is 8 or 16 or 32
+segmnt	db 0		;; segment determined by prefix (or otherwise)
+disflags db 0		;; flags for the disassembler
+disflags2 db 0		;; another copy of DIS_I_KNOWSIZ
 
 _DATA ends
 
 CONST segment
 
-;--- table of obsolete-instruction values.
-;--- instructions are FENI, FDISI, FSETPM, MOV to/from TRx
+;; --- table of obsolete-instruction values.
+;; --- instructions are FENI, FDISI, FSETPM, MOV to/from TRx
 obsinst	dw SFPGROUP3, SFPGROUP3+1, SFPGROUP3+4
 		dw SPARSE_BASE+24h, SPARSE_BASE+26h
 
-;--- Table for 16-bit mod r/m addressing.  8 = BX, 4 = BP, 2 = SI, 1 = DI.
+;; --- Table for 16-bit mod r/m addressing.  8 = BX, 4 = BP, 2 = SI, 1 = DI.
 
 rmtab	db 8+2, 8+1, 4+2, 4+1, 2, 1, 4, 8
 
-;--- Tables of register names.
-;--- rgnam816/rgnam16/segrgnam must be consecutive.
-;--- also used by the line assembler
+;; --- Tables of register names.
+;; --- rgnam816/rgnam16/segrgnam must be consecutive.
+;; --- also used by the line assembler
 
 rgnam816 label word
 	DefGPR AL
@@ -94,7 +94,7 @@ rgnam16 label word
 	DefGPR BP
 	DefGPR SI
 	DefGPR DI
-N_REGS16 equ ( $ - rgnam16 ) / 2
+N_REGS16 equ ($ - rgnam16)/2
 segrgnam label word
 	DefSR ES
 	DefSR CS
@@ -102,1297 +102,1297 @@ segrgnam label word
 	DefSR DS
 	DefSR FS
 	DefSR GS
-N_SEGREGS equ ( $ - segrgnam ) / 2
+N_SEGREGS equ ($ - segrgnam)/2
 	DefSR ST
 	DefSR MM
 	DefSR CR
 	DefSR DR
 	DefSR TR
-N_ALLREGS equ ( $ - rgnam816 ) / 2
+N_ALLREGS equ ($ - rgnam816)/2
 
-;--- address of debuggee's segment registers
-;--- used to display memory contents ( DIS_F_SHOW )
+;; --- address of debuggee's segment registers
+;; --- used to display memory contents (DIS_F_SHOW)
 segrgaddr dw regs.rES,regs.rCS,regs.rSS,regs.rDS
-if RING0	; for DebugR, we also display FS/GS contents
+if RING0	;; for DebugR, we also display FS/GS contents
 	dw regs.rFS, regs.rGS
 endif
 
-;--- Tables for handling of named prefixes.
+;; --- Tables for handling of named prefixes.
 
-prefixlist	db 26h,2eh,36h,3eh,64h,65h	;segment prefixes (in order)
-			db 9bh,0f0h,0f2h,0f3h		;WAIT,LOCK,REPNE,REPE
+prefixlist	db 26h,2eh,36h,3eh,64h,65h	;; segment prefixes (in order)
+			db 9bh,0f0h,0f2h,0f3h		;; WAIT,LOCK,REPNE,REPE
 N_PREFIX equ $ - prefixlist
 prefixmnem	dw MN_WAIT,MN_LOCK,MN_REPNE,MN_REPE
 
 CONST ends
 
-disasm1:				;<--- standard entry
-	mov al, 0
+disasm1:				;; <--- standard entry
+	mov AL, 0
 
-disasm proc				;<--- entry with AL=disflags ( DIS_F_REPT & DIS_F_SHOW )
+disasm proc				;; <--- entry with AL=disflags (DIS_F_REPT & DIS_F_SHOW)
 
-	mov [disflags], al
+	mov [disflags], AL
 
-CONST segment	; must be located inside disasm since local labels are used here
+CONST segment	;; must be located inside disasm since local labels are used here
 
 	align 2
 
-;   Jump table for OP_IMM, OP_RM, OP_M, OP_R_MOD, OP_MOFFS, OP_R, OP_R_ADD,
-;   and OP_AX.
-;   See orders of asm_jmp1 and bittab.
+;;  Jump table for _Ix, _Ex, _Mx, _Xx, _Ox, _Rx, _rx,
+;;  and _Ax.
+;;  See orders of asm_jmp1 and bittab.
 
 dis_jmp1 label word
 	dw dop_imm, dop_rm, dop_m, dop_r_mod
 	dw dop_moffs, dop_r, dop_r_add, dop_ax
 
-;   jump table for displaying operands
-;   See orders of asm_jmp1 and bittab.
+;;  jump table for displaying operands
+;;  See orders of asm_jmp1 and bittab.
 
 dis_optab label word
-	dw dop_m64,  dop_mfloat, dop_mdouble, dop_m80	;00-03
-	dw dop_mxx,  dop_farmem, dop_farimm,  dop_rel8	;04-07
-	dw dop_rel1632, dop_st1, dop_sti,     dop_cr	;08-11
-	dw dop_dr,   dop_tr,     dop_segreg,  dop_imms8	;12-15
-	dw dop_imm8, dop_mmx,    dop_shosiz				;16-18
-;--- string items OP_1 .. OP_SS
-	db '1',0	;19
-	db '3',0	;20
-	db 'DX'		;21
-	db 'CL'		;22
-	db 'ST'		;23
-	db 'CS','DS','ES','FS','GS','SS'	;24-29
+	dw dop_m64,  dop_mfloat, dop_mdouble, dop_m80	;; 00-03
+	dw dop_mxx,  dop_farmem, dop_farimm,  dop_rel8	;; 04-07
+	dw dop_rel1632, dop_st1, dop_sti,     dop_cr	;; 08-11
+	dw dop_dr,   dop_tr,     dop_segreg,  dop_imms8	;; 12-15
+	dw dop_imm8, dop_mmx,    dop_shosiz				;; 16-18
+;; --- string items _1 .. _SS
+	db '1',0	;; 19
+	db '3',0	;; 20
+	db 'DX'		;; 21
+	db 'CL'		;; 22
+	db 'ST'		;; 23
+	db 'CS','DS','ES','FS','GS','SS'	;; 24-29
 
-;--- Jump table for a certain place.
-;--- the size of this table matches OPTYPES_BASE
+;; --- Jump table for a certain place.
+;; --- the size of this table matches OPTYPES_BASE
 
 dis_jmp2 label word
-	dw disbad		;illegal instruction
-	dw da_twobyte	;two byte instruction (0F xx)
-	dw da_insgrp	;instruction group
-	dw da_fpuins	;coprocessor instruction
-	dw da_fpugrp	;coprocessor instruction group
-	dw da_insprf	;instruction prefix (including 66h/67h)
+	dw disbad		;; illegal instruction
+	dw da_twobyte	;; two byte instruction (0F xx)
+	dw da_insgrp	;; instruction group
+	dw da_fpuins	;; coprocessor instruction
+	dw da_fpugrp	;; coprocessor instruction group
+	dw da_insprf	;; instruction prefix (including 66h/67h)
 OPTYPES_BASE equ $ - dis_jmp2
 
 CONST ends
 
 if FLATSS
 	.386
-;	mov [savesp2],esp
-	mov [run_sp],esp
+;;mov [savesp2],ESP
+	mov [run_sp],ESP
 else
-;	mov [savesp2],sp
-	mov [run_sp],sp
+;;mov [savesp2],SP
+	mov [run_sp],SP
 endif
-	xor ax,ax
-	mov [dis_n],ax
-	mov word ptr [preflags],ax	;clear preflags and preused
+	xor AX,AX
+	mov [dis_n],AX
+	mov word ptr [preflags],AX	;; clear preflags and preused
 if ?PM
-	mov bx,[u_addr+4]
+	mov BX,[u_addr+4]
 	call getseldefsize
-	mov [bCSAttr],al
+	mov [bCSAttr],AL
  if 0
-;--- ?PM v2.1: don't preset opsize/adrsize prefixes if D bit is set;
-;--- those prefixes toggle just once.
+;; --- ?PM v2.1: don't preset opsize/adrsize prefixes if D bit is set;
+;; --- those prefixes toggle just once.
 	jz @F
 	or [preflags], PRE32D or PRE32A
-;	or [preused], PRE32D or PRE32A
+;;or [preused], PRE32D or PRE32A
 @@:
  endif
 endif
-	mov [segmnt],3			;initially use DS segment
-	mov [rmsize],80h		;don't display any memory
-	mov word ptr [ai.dismach],0;no special machine needed, so far
-	call disgetbyte			;get a byte of the instruction
-	cmp al,9bh				;wait instruction (must be the first prefix)
-	jne da2					;if not
+	mov [segmnt],3			;; initially use DS segment
+	mov [rmsize],80h		;; don't display any memory
+	mov word ptr [ai.dismach],0	;; no special machine needed, so far
+	call disgetbyte			;; get a byte of the instruction
+	cmp AL,9bh				;; wait instruction (must be the first prefix)
+	jne da2					;; if not
 
-;   The wait instruction is actually a separate instruction as far as
-;   the x86 is concerned, but we treat it as a prefix since there are
-;   some mnemonics that incorporate it.  But it has to be treated specially
-;   since you can't do, e.g., seg cs wait ... but must do wait seg cs ...
-;   instead.  We'll catch it later if the wait instruction is not going to
-;   be part of a shared mnemonic.
+;;  The wait instruction is actually a separate instruction as far as
+;;  the x86 is concerned, but we treat it as a prefix since there are
+;;  some mnemonics that incorporate it.  But it has to be treated specially
+;;  since you can't do, e.g., seg CS wait ... but must do wait seg CS ...
+;;  instead.  We'll catch it later if the wait instruction is not going to
+;;  be part of a shared mnemonic.
 
 	or [preflags],PREWAIT
 
-;   If we've found a prefix, we return here for the actual instruction
-;   (or another prefix).
+;;  If we've found a prefix, we return here for the actual instruction
+;;  (or another prefix).
 
 da1:
 	call disgetbyte
 da2:
-	mov [instru],al	;save away the instruction
-	mov ah,0
+	mov [instru],AL	;; save away the instruction
+	mov AH,0
 
-;--- Now we have the sequence number of the instruction in AX.  Look it up.
+;; --- Now we have the sequence number of the instruction in AX.  Look it up.
 
 da3:
-	mov bx,ax
-	mov [idxins],ax	;save the compressed index
-	cmp ax,SPARSE_BASE
-	jb @F			;if it's not from the squeezed part of the table
-	mov bl,[sqztab+bx-SPARSE_BASE]
-	mov bh,0
-	add bx,SPARSE_BASE	;bx = compressed index
+	mov BX,AX
+	mov [idxins],AX	;; save the compressed index
+	cmp AX,SPARSE_BASE
+	jb @F			;; if it's not from the squeezed part of the table
+	mov BL,[sqztab+BX-SPARSE_BASE]
+	mov BH,0
+	add BX,SPARSE_BASE	;; BX = compressed index
 @@:
-	mov cl,[optypes+bx]	;cx = opcode type
-	mov ch,0
-	shl bx,1
-	mov bx,[opinfo+bx]	;bx = other info (mnemonic if a true instruction)
-	mov si,cx
-	mov ax,bx
-	mov cl,12
-	shr ax,cl
-	cmp al,[ai.dismach]
-	jb @F				;if a higher machine is already required
-	mov [ai.dismach],al	;set machine type
+	mov CL,[optypes+BX]	;; CX = opcode type
+	mov CH,0
+	shl BX,1
+	mov BX,[opinfo+BX]	;; BX = other info (mnemonic if a true instruction)
+	mov SI,CX
+	mov AX,BX
+	mov CL,12
+	shr AX,CL
+	cmp AL,[ai.dismach]
+	jb @F				;; if a higher machine is already required
+	mov [ai.dismach],AL	;; set machine type
 @@:
-	and bh,0fh			;=and bx,0fffh - remove the machine field
-	cmp si,OPTYPES_BASE
-	jae da13pre			;if this is an actual instruction
-	call [dis_jmp2+si]	;otherwise, do more specific processing
-	jmp da3				;back for more
+	and BH,0fh			;; =and BX,0fffh - remove the machine field
+	cmp SI,OPTYPES_BASE
+	jae da13pre			;; if this is an actual instruction
+	call [dis_jmp2+SI]	;; otherwise, do more specific processing
+	jmp da3				;; back for more
 
-;--- dis_jmp2[1]: Two-byte instruction 0F xx: index 1E0-2DF.
+;; --- dis_jmp2[1]: Two-byte instruction 0F xx: index 1E0-2DF.
 
 da_twobyte:
 	call disgetbyte
-	mov [instru],al
-	mov ah,0
-	add ax,SPARSE_BASE
+	mov [instru],AL
+	mov AH,0
+	add AX,SPARSE_BASE
 	ret
 
-;--- dis_jmp2[2]: Instruction group.
-;--- BX contains "instruction base": 100h, 110h, ...
+;; --- dis_jmp2[2]: Instruction group.
+;; --- BX contains "instruction base": 100h, 110h, ...
 
 da_insgrp:
-	call getregmem_r	;get the middle 3 bits of the R/M byte
+	call getregmem_r	;; get the middle 3 bits of the R/M byte
 	cbw
-	add ax,bx			;offset
+	add AX,BX			;; offset
 	ret
 
-;--- dis_jmp2[3]: Coprocessor instruction.
-;--- BX contains "instruction base": 148h, 158h, ...
+;; --- dis_jmp2[3]: Coprocessor instruction.
+;; --- BX contains "instruction base": 148h, 158h, ...
 
 da_fpuins:
 	or [disflags], DIS_I_SHOWSIZ
 	or [ai.dmflags], DM_COPR
 	call getregmem
-	cmp al,0c0h
-	jb da_insgrp	;range 00-bfh is same as an instruction group
-	mov cl,3
-	shr al,cl		;C0-FF --> 18-1F
-	sub al,18h-8	;18-1F --> 08-0F
+	cmp AL,0c0h
+	jb da_insgrp	;; range 00-bfh is same as an instruction group
+	mov CL,3
+	shr AL,CL		;; C0-FF --> 18-1F
+	sub AL,18h-8	;; 18-1F --> 08-0F
 	cbw
-	add ax,bx		;offset
+	add AX,BX		;; offset
 	ret
 
-;--- dis_jmp2[4]: Coprocessor instruction group.
-;--- BX contains "instruction base": 1C8h, 1D0h, 1D8h
+;; --- dis_jmp2[4]: Coprocessor instruction group.
+;; --- BX contains "instruction base": 1C8h, 1D0h, 1D8h
 
 da_fpugrp:
-	mov al,[ai.regmem]
-	and al,7
+	mov AL,[ai.regmem]
+	and AL,7
 	cbw
-	add ax,bx
+	add AX,BX
 	ret
 
-;--- dis_jmp2[5]: Instruction prefix.  At this point, bl = prefix bits; bh = segment
+;; --- dis_jmp2[5]: Instruction prefix.  At this point, BL = prefix bits; BH = segment
 
 da_insprf:
-if 0	; v2.1: removed - opsize/adrsize prefixes "toggle" just once
-	mov al,bl
-	and bl,not (PRE32D or PRE32A)	;these flags are XORed!
+if 0	;; v2.1: removed - opsize/adrsize prefixes "toggle" just once
+	mov AL,BL
+	and BL,not (PRE32D or PRE32A)	;; these flags are XORed!
 endif
-	test bl,[preflags]
-	jnz disbad0		;if there are duplicates
-	or [preflags],bl
-if 0	; v2.1: removed - opsize/adrsize prefixes "toggle" just once
-	mov bl,al
-	and al,PRE32D or PRE32A
-	xor [preflags],al
+	test BL,[preflags]
+	jnz disbad0		;; if there are duplicates
+	or [preflags],BL
+if 0	;; v2.1: removed - opsize/adrsize prefixes "toggle" just once
+	mov BL,AL
+	and AL,PRE32D or PRE32A
+	xor [preflags],AL
 endif
-	test bl,PRESEG
-	jz @F			;if not a segment
-	mov [segmnt],bh	;save the segment
+	test BL,PRESEG
+	jz @F			;; if not a segment
+	mov [segmnt],BH	;; save the segment
 @@:
-	pop ax			;discard return address
+	pop AX			;; discard return address
 	jmp da1
 
 disbad0:
-	jmp disbad		;we don't allow duplicate prefixes
+	jmp disbad		;; we don't allow duplicate prefixes
 
 
 da13pre:
 
-if ?PM ; v2.1: update opsize/adrsize prefixes if D bit set AFTER prefixes have been read
+if ?PM ;; v2.1: update opsize/adrsize prefixes if D bit set AFTER prefixes have been read
 	test [bCSAttr], 40h
 	jz @F
 	xor [preflags], PRE32D or PRE32A
 @@:
 endif
 
-;   OK.  Here we go.  This is an actual instruction.
-;   BX=offset of mnemonic in mnlist
-;   SI=offset of operand list in oplists
-;   First print the op mnemonic.
+;;  OK.  Here we go.  This is an actual instruction.
+;;  BX=offset of mnemonic in mnlist
+;;  SI=offset of operand list in oplists
+;;  First print the op mnemonic.
 
 da13::
-	push si
-	lea si,[mnlist+bx]	;offset of mnemonic
-	cmp si,offset mnlist+MN_BSWAP
-	jne @F				;if not BSWAP
+	push SI
+	lea SI,[mnlist+BX]	;; offset of mnemonic
+	cmp SI,offset mnlist+MN_BSWAP
+	jne @F				;; if not BSWAP
 	call dischk32d
-	jz disbad0			;if no operand-size prefix
+	jz disbad0			;; if no operand-size prefix
 @@:
-	call showop			;print out the op code (at line_out+28)
-	mov [sizeloc],0		;clear out this flag
-	pop si				;recover list of operands
-	add si,offset oplists - OPTYPES_BASE
-	cmp byte ptr [si],0
-	je da21				;if we're done
+	call showop			;; print out the op code (at line_out+28)
+	mov [sizeloc],0		;; clear out this flag
+	pop SI				;; recover list of operands
+	add SI,offset oplists - OPTYPES_BASE
+	cmp byte ptr [SI],0
+	je da21				;; if we're done
 
-;   Loop over operands.  si -> operand type.
-;   Fortunately the operands appear in the instruction in the same
-;   order as they appear in the disassembly output.
+;;  Loop over operands.  SI -> operand type.
+;;  Fortunately the operands appear in the instruction in the same
+;;  order as they appear in the disassembly output.
 
 da14:
-	mov [disflags2],0		;clear out size-related flags
-	lodsb					;get the operand type
-	cmp al,OP_SIZE
-	jb da18					;if it's not size dependent
-	mov [disflags2],DIS_I_KNOWSIZ	;indicate variable size
-	cmp al,OP_8
-	jae da16				;if the size is fixed (8,16,32,64)
-	cmp al,OP_1632
-	jae da15				;if word or dword
-	mov ah,-1
+	mov [disflags2],0		;; clear out size-related flags
+	lodsb					;; get the operand type
+	cmp AL,OP_SIZE
+	jb da18					;; if it's not size dependent
+	mov [disflags2],DIS_I_KNOWSIZ	;; indicate variable size
+	cmp AL,OpB
+	jae da16				;; if the size is fixed (8,16,32,64)
+	cmp AL,OpV
+	jae da15				;; if word or dword
+	mov AH,-1
 	test [instru],1
-	jz da17					;if byte
+	jz da17					;; if byte
 da15:
-	or [preused],PRE32D		;mark this flag as used
-	mov ah,[preflags]
-	and ah,PRE32D			;this will be 10h for dword, 00h for word
-	jmp da17				;done
+	or [preused],PRE32D		;; mark this flag as used
+	mov AH,[preflags]
+	and AH,PRE32D			;; this will be 10h for dword, 00h for word
+	jmp da17				;; done
 
 da16:
-	mov ah,al		;OP_8, OP_16, OP_32 or OP_64 (we know which)
-	and ah,0f0h		;this converts ah to <0 for byte, =0 for word,
-	sub ah,OP_16	;and >0 for dword (byte=F0,word=0,dword=10,qword=20)
+	mov AH,AL		;; OpB, OpW, OpD or OpQ (we know which)
+	and AH,0f0h		;; this converts AH to <0 for byte, =0 for word,
+	sub AH,OpW	;; and >0 for dword (byte=F0,word=0,dword=10,qword=20)
 
-;--- Now we know the size (in ah); branch off to do the operand itself.
+;; --- Now we know the size (in AH)	;; branch off to do the operand itself.
 
 da17:
-	mov bl,al
-	and bx,0eh			;8 entries (IMM, RM, M, R_MOD, M_OFFS, R, R_ADD, AX)
-	call [dis_jmp1+bx]	;print out the operand
-	jmp da20			;done with operand
+	mov BL,AL
+	and BX,0eh			;; 8 entries (IMM, RM, M, R_MOD, M_OFFS, R, R_ADD, AX)
+	call [dis_jmp1+BX]	;; print out the operand
+	jmp da20			;; done with operand
 
-;--- Sizeless operands.
+;; --- Sizeless operands.
 
 da18:
 	cbw
-	cmp al, OP_STR
-	xchg ax,bx			; mov bx, ax
-	mov ax,[dis_optab+bx-2]
-	jb @F				;if it's not a string
+	cmp AL, OP_STR
+	xchg AX,BX			;; mov BX, AX
+	mov AX,[dis_optab+BX-2]
+	jb @F				;; if it's not a string
 	stosw
-	cmp ah,0
-	jnz da20			;if it's two characters
-	dec di
-	jmp da20			;done with operand
+	cmp AH,0
+	jnz da20			;; if it's two characters
+	dec DI
+	jmp da20			;; done with operand
 @@:
-	call ax				;otherwise, do something else
+	call AX				;; otherwise, do something else
 
-;--- operand done, check if there's another one
+;; --- operand done, check if there's another one
 
 da20:
-	cmp byte ptr [si],0
-	jz da21				;if we're done
-	mov al,','
+	cmp byte ptr [SI],0
+	jz da21				;; if we're done
+	mov AL,','
 	stosb
-	jmp da14			;another operand
+	jmp da14			;; another operand
 
-;--- all operands done.
-;--- now check and loop for unused prefixes:
-;--- OPSIZE (66h), ADDRSIZE (67h), WAIT, segment, REP[N][Z], LOCK
+;; --- all operands done.
+;; --- now check and loop for unused prefixes:
+;; --- OPSIZE (66h), ADDRSIZE (67h), WAIT, segment, REP[N][Z], LOCK
 
 da21:
-	mov al,[preused]
-	not al
-	and al,[preflags]
-	jnz @F			;if some flags remain unused
-	jmp da_done		;if all flags were used
+	mov AL,[preused]
+	not AL
+	and AL,[preflags]
+	jnz @F			;; if some flags remain unused
+	jmp da_done		;; if all flags were used
 @@:
-	mov cx,N_WTAB
-	mov bx,offset wtab1
-	mov dx,2*N_WTAB-2
-	mov ah,PREWAIT
-	test al,ah
-	jnz @F			;if there's a WAIT prefix hanging
+	mov CX,N_WTAB
+	mov BX,offset wtab1
+	mov DX,2*N_WTAB-2
+	mov AH,PREWAIT
+	test AL,AH
+	jnz @F			;; if there's a WAIT prefix hanging
 
-;--- todo: the string instructions may have both 66h&67h prefixes
+;; --- todo: the string instructions may have both 66h&67h prefixes
 
-	mov cx,N_LTABO
-	mov bx,offset ltabo1
-	mov dx,2*N_LTABO-2
-	mov ah,PRE32D
-	test al,ah
-	jnz @F			;if it's not a 66h prefix that's hanging
+	mov CX,N_LTABO
+	mov BX,offset ltabo1
+	mov DX,2*N_LTABO-2
+	mov AH,PRE32D
+	test AL,AH
+	jnz @F			;; if it's not a 66h prefix that's hanging
 
-	mov cx,N_LTABA
-	mov bx,offset ltaba1
-	mov dx,2*N_LTABA-2
-	mov ah,PRE32A
-	test al,ah
-	jnz @F			;if it's not a 67h prefix that's hanging
+	mov CX,N_LTABA
+	mov BX,offset ltaba1
+	mov DX,2*N_LTABA-2
+	mov AH,PRE32A
+	test AL,AH
+	jnz @F			;; if it's not a 67h prefix that's hanging
 	jmp da_chkseg
 @@:
-	or [preused],ah	;mark this prefix as used
-	push di
-	mov di,bx
-	mov bl,ah
-	mov ax,[idxins]
+	or [preused],AH	;; mark this prefix as used
+	push DI
+	mov DI,BX
+	mov BL,AH
+	mov AX,[idxins]
 	repne scasw
-	jne da23_1		;if not found in the list
-	add di,dx		;replace the mnemonic with the 32-bit name
-	mov si,[di]
-	add si,offset mnlist
-	call showop		;copy op mnemonic
+	jne da23_1		;; if not found in the list
+	add DI,DX		;; replace the mnemonic with the 32-bit name
+	mov SI,[DI]
+	add SI,offset mnlist
+	call showop		;; copy op mnemonic
 da23_0:
-	pop di
+	pop DI
 	jmp da21
 da23_1:
 if ?PM
-	test bl,PRE32A or PRE32D	;is a 66/67 prefix unhandled?
+	test BL,PRE32A or PRE32D	;; is a 66/67 prefix unhandled?
 	jz disbad2
-	test [bCSAttr],40h		;32bit code segment?
-	jnz da23_0				;then ignore those.
+	test [bCSAttr],40h		;; 32bit code segment?
+	jnz da23_0				;; then ignore those.
 endif
 disbad2:
 	jmp disbad
 
 da_chkseg:
-	test al,PRESEG
-	jz da_chkrep	;if not because of a segment prefix
-	mov ax,[idxins]
-	cmp ah,0
-	jnz disbad2		;if index > 256
-	push di
-	mov cx,P_LEN
-	mov di,offset prfxtab
+	test AL,PRESEG
+	jz da_chkrep	;; if not because of a segment prefix
+	mov AX,[idxins]
+	cmp AH,0
+	jnz disbad2		;; if index > 256
+	push DI
+	mov CX,P_LEN
+	mov DI,offset prfxtab
 	repne scasb
-	pop di
-	jne disbad2		;if it's not on the list
-	mov cx,3
+	pop DI
+	jne disbad2		;; if it's not on the list
+	mov CX,3
 	call moveover
-	push di
-	mov di,offset line_out+MNEMONOFS
-	call showseg	;show segment register
-	mov al,':'
+	push DI
+	mov DI,offset line_out+MNEMONOFS
+	call showseg	;; show segment register
+	mov AL,':'
 	stosb
-	pop di
-	or [preused],PRESEG		;mark it as used
+	pop DI
+	or [preused],PRESEG		;; mark it as used
 	jmp da21
 
 da_chkrep:
-	test al,PREREP
-	jz da_chklock	;if not a REP prefix
-	and al,PREREP+PREREPZ
-	or [preused],al
-	mov ax,[idxins]
-	cmp ah,0
-	jnz disbad2		;if not in the first 256 bytes
-	and al,not 1	;clear bit0 (MOVSW -> MOVSB)
-	push di
-	mov di,offset replist
-	mov cx,N_REPNC	;scan those for REP first
+	test AL,PREREP
+	jz da_chklock	;; if not a REP prefix
+	and AL,PREREP+PREREPZ
+	or [preused],AL
+	mov AX,[idxins]
+	cmp AH,0
+	jnz disbad2		;; if not in the first 256 bytes
+	and AL,not 1	;; clear bit0 (MOVSW -> MOVSB)
+	push DI
+	mov DI,offset replist
+	mov CX,N_REPNC	;; scan those for REP first
 	repne scasb
-	mov si,offset mnlist+MN_REP
-	je da27			;if one of the REP instructions
-	mov cl,N_REPALL - N_REPNC
+	mov SI,offset mnlist+MN_REP
+	je da27			;; if one of the REP instructions
+	mov CL,N_REPALL - N_REPNC
 	repne scasb
-	jne disbad2		;if not one of the REPE/REPNE instructions
-	mov si,offset mnlist+MN_REPE
+	jne disbad2		;; if not one of the REPE/REPNE instructions
+	mov SI,offset mnlist+MN_REPE
 	test [preused],PREREPZ
-	jnz da27		;if REPE
-	mov si,offset mnlist+MN_REPNE
-	jmp da27		;it's REPNE
+	jnz da27		;; if REPE
+	mov SI,offset mnlist+MN_REPNE
+	jmp da27		;; it's REPNE
 
 disbad3:
 	jmp disbad
 
 da_chklock:
-	test al,PRELOCK
-	jz disbad3		;if not a lock prefix, either
-	push di
-	mov ax,[idxins]
-	mov di,offset locktab
-	mov cx,N_LOCK
+	test AL,PRELOCK
+	jz disbad3		;; if not a lock prefix, either
+	push DI
+	mov AX,[idxins]
+	mov DI,offset locktab
+	mov CX,N_LOCK
 	repne scasw
-	jne disbad3		;if not in the approved list
+	jne disbad3		;; if not in the approved list
 	test [preused],PRESEG
-	jz disbad3		;if memory was not accessed
-	mov si,offset mnlist+MN_LOCK
+	jz disbad3		;; if memory was not accessed
+	mov SI,offset mnlist+MN_LOCK
 	or [preused],PRELOCK
 
-;--- Slip in another mnemonic: REP/REPE/REPNE/LOCK.
-;--- SI = offset of mnemonic, what should be
-;--- DI is on the stack.
+;; --- Slip in another mnemonic: REP/REPE/REPNE/LOCK.
+;; --- SI = offset of mnemonic, what should be
+;; --- DI is on the stack.
 
 da27:
-	pop di
-	mov cx,8
-	push si
+	pop DI
+	mov CX,8
+	push SI
 	call moveover
-	pop si
-	push di
+	pop SI
+	push DI
 	call showop
-	pop di
+	pop DI
 	jmp da21
 
-;--- Done with instruction.  Erase the size indicator, if appropriate.
+;; --- Done with instruction.  Erase the size indicator, if appropriate.
 
 da_done:
-	mov cx,[sizeloc]
-	cmp cx,0
-	jz da28b		;if there was no size given
-	mov al,[disflags]
-	test al,DIS_I_SHOWSIZ
-	jnz da28b		;if we need to show the size
-	test al,DIS_I_KNOWSIZ
-	jz da28b		;if the size is not known already
-	xchg cx,di
-	mov si,di		;save old di
-	mov al,' '
+	mov CX,[sizeloc]
+	cmp CX,0
+	jz da28b		;; if there was no size given
+	mov AL,[disflags]
+	test AL,DIS_I_SHOWSIZ
+	jnz da28b		;; if we need to show the size
+	test AL,DIS_I_KNOWSIZ
+	jz da28b		;; if the size is not known already
+	xchg CX,DI
+	mov SI,DI		;; save old DI
+	mov AL,' '
 @@:
-	scasb			;skip size name
-	jne @B			;if not done yet
-					;(The above is the same as repne scasb, but
-					;has no effect on cx.)
-	add di,4		;skip 'PTR '
-	xchg si,di
-	sub cx,si
-	rep movsb		;move the line
+	scasb			;; skip size name
+	jne @B			;; if not done yet
+					;; (The above is the same as repne scasb, but
+					;; has no effect on CX.)
+	add DI,4		;; skip 'PTR '
+	xchg SI,DI
+	sub CX,SI
+	rep movsb		;; move the line
 
-;--- Now we're really done.  Print out the bytes on the left.
+;; --- Now we're really done.  Print out the bytes on the left.
 
 da28b:
-	push di		;print start of disassembly line
-	mov di,offset line_out
-	mov ax,[u_addr+4]	;print address
+	push DI		;; print start of disassembly line
+	mov DI,offset line_out
+	mov AX,[u_addr+4]	;; print address
 	call hexword
-	mov al,':'
+	mov AL,':'
 	stosb
-	sizeprfX			;mov eax,[u_addr+0]
-	mov ax,[u_addr+0]
+	sizeprfX			;; mov EAX,[u_addr+0]
+	mov AX,[u_addr+0]
 if ?PM
-	mov si,hexword
+	mov SI,hexword
 	test [bCSAttr], CS32ATTR
 	jz @F
-	mov si,hexdword
+	mov SI,hexdword
 @@:
-	call si
+	call SI
 else
 	call hexword
 endif
-	mov al,' '
+	mov AL,' '
 	stosb
-	mov bx,[dis_n]
+	mov BX,[dis_n]
 @@:
-	mov si,offset line_out+MNEMONOFS - 1
-	sub si, di
-	shr si, 1
-	cmp bx,si
-	jle da29		;if it's a short instruction which fits in one line
-	sub bx,si
-	push bx
-	mov bx,si
-	push di
+	mov SI,offset line_out+MNEMONOFS - 1
+	sub SI, DI
+	shr SI, 1
+	cmp BX,SI
+	jle da29		;; if it's a short instruction which fits in one line
+	sub BX,SI
+	push BX
+	mov BX,SI
+	push DI
 	call disshowbytes
 	call putsline
-	pop cx
-	pop bx
-	mov di,offset line_out
-	sub cx,di
-	mov al,' '
+	pop CX
+	pop BX
+	mov DI,offset line_out
+	sub CX,DI
+	mov AL,' '
 	rep stosb
 	jmp @B
 da29:
 	call disshowbytes
-	mov al,' '		;pad to op code
-	mov cx,offset line_out+MNEMONOFS
-	sub cx,di
+	mov AL,' '		;; pad to op code
+	mov CX,offset line_out+MNEMONOFS
+	sub CX,DI
 	jc @F
 	rep stosb
 @@:
-	pop di
+	pop DI
 	test [disflags], DIS_I_UNUSED
-	jz da32			;if we don't print ' (unused)'
-	mov si,offset unused
-	cmp byte ptr [di-1],' '
-	jne @F			;if there's already a space here
-	inc si
+	jz da32			;; if we don't print ' (unused)'
+	mov SI,offset unused
+	cmp byte ptr [DI-1],' '
+	jne @F			;; if there's already a space here
+	inc SI
 @@:
-	call copystring	;si->di
+	call copystring	;; SI->DI
 
-;--- Print info. on minimal processor needed.
+;; --- Print info. on minimal processor needed.
 
 da32:
-	push di
-	mov di,offset obsinst
-	mov cx,[idxins]
-	call showmach	;show the machine type, if needed
-	pop di
-	jcxz da32f		;if no message
+	push DI
+	mov DI,offset obsinst
+	mov CX,[idxins]
+	call showmach	;; show the machine type, if needed
+	pop DI
+	jcxz da32f		;; if no message
 
-;--- Print a message on the far right.
+;; --- Print a message on the far right.
 
-	mov ax,offset line_out+79
-	sub ax,cx
-	push cx
-	call tab_to		;tab out to the location
-	pop cx
-	rep movsb		;copy the string
-	jmp da32z		;done
+	mov AX,offset line_out+79
+	sub AX,CX
+	push CX
+	call tab_to		;; tab out to the location
+	pop CX
+	rep movsb		;; copy the string
+	jmp da32z		;; done
 
-;--- Dump referenced memory location.
+;; --- Dump referenced memory location.
 
 da32f:
-	mov al,[disflags]
-	xor al,DIS_F_SHOW + DIS_I_SHOW
-	test al,DIS_F_SHOW + DIS_I_SHOW
-	jnz da32z		;if there is no memory location to show
-ife RING0			; for DebugR, FS/GS memory contents aren't skipped
+	mov AL,[disflags]
+	xor AL,DIS_F_SHOW + DIS_I_SHOW
+	test AL,DIS_F_SHOW + DIS_I_SHOW
+	jnz da32z		;; if there is no memory location to show
+ife RING0			;; for DebugR, FS/GS memory contents aren't skipped
 	cmp [segmnt],3
-	ja da32z		;if FS or GS
+	ja da32z		;; if FS or GS
 endif
-	mov ax,offset line_out+79-8	; room for ss:oooo=bb|wwww|dddddddd
-	mov cx,2
+	mov AX,offset line_out+79-8	;; room for SS:oooo=bb|wwww|dddddddd
+	mov CX,2
 	cmp [rmsize],0
-	jl da32h		;if byte
-	jz @F			;if word
-	add cx, 4		; 4 more chars
+	jl da32h		;; if byte
+	jz @F			;; if word
+	add CX, 4		;; 4 more chars
 @@:
-	add cx, 2		; 2 more chars
+	add CX, 2		;; 2 more chars
 da32h:
-	sub ax, cx
-	push cx
+	sub AX, CX
+	push CX
 	call tab_to
-	call showseg		;show segment register
-	mov al,':'
+	call showseg		;; show segment register
+	mov AL,':'
 	stosb
-	mov ax,[addrr]
-	call hexword		;show offset
-	mov al,'='
+	mov AX,[addrr]
+	call hexword		;; show offset
+	mov AL,'='
 	stosb
-	mov al,[segmnt]		;segment number
+	mov AL,[segmnt]		;; segment number
 	cbw
-	shl ax,1
-	xchg ax,bx			;mov bx,ax
-	mov bx,[segrgaddr+bx] ;get address of value
+	shl AX,1
+	xchg AX,BX			;; mov BX,AX
+	mov BX,[segrgaddr+BX]	;; get address of value
 if ?PM
-;--- v2.0: we don't want that just msg "General Protection Fault"
-;--- appears, without a hint what the underlying problem is.
-;--- so display what's rendered up to now...
+;; --- v2.0: we don't want that just msg "General Protection Fault"
+;; --- appears, without a hint what the underlying problem is.
+;; --- so display what's rendered up to now...
 	call puts
-	or [disflags], DIS_I_MEMACC	; tell exc handler to print a crlf first
-	mov di, offset line_out
+	or [disflags], DIS_I_MEMACC	;; tell exc handler to print a crlf first
+	mov DI, offset line_out
 endif
-	pop cx
-	shr cl, 1
-;--- v2.0: just read the bytes that the instruction would
-	push ds
-	mov ds, [bx]
-	mov bx, cs:[addrr]
-	add bx, cx
+	pop CX
+	shr CL, 1
+;; --- v2.0: just read the bytes that the instruction would
+	push DS
+	mov DS, [BX]
+	mov BX, CS:[addrr]
+	add BX, CX
 @@:
-	dec bx
-	mov al, [bx]
-	call hexbyte	;display byte
-	dec cl
+	dec BX
+	mov AL, [BX]
+	call hexbyte	;; display byte
+	dec CL
 	jnz @B
-	pop ds
+	pop DS
 if ?PM
 	and [disflags], not DIS_I_MEMACC
 endif
 
 da32z:
-	call trimputs	;print (rest of) disassembled line
-	mov al,[disflags]
-	test al,DIS_F_REPT
-	jz da34			;if we're not allowed to repeat ourselves
-	test al,DIS_I_UNUSED
-	jnz @F			;if we printed ' (unused)'
-	mov ax,[idxins]
-	cmp ax,17h
-	je @F			;if it was 'pop ss'
-	cmp ax,8eh
-	je @F			;if it was 'mov ss,--'
-	cmp ax,0fbh
-	jne da34		;if it was not 'sti'
+	call trimputs	;; print (rest of) disassembled line
+	mov AL,[disflags]
+	test AL,DIS_F_REPT
+	jz da34			;; if we're not allowed to repeat ourselves
+	test AL,DIS_I_UNUSED
+	jnz @F			;; if we printed ' (unused)'
+	mov AX,[idxins]
+	cmp AX,17h
+	je @F			;; if it was 'pop SS'
+	cmp AX,8eh
+	je @F			;; if it was 'mov SS,--'
+	cmp AX,0fbh
+	jne da34		;; if it was not 'sti'
 @@:
 	jmp disasm1
 da34:
 	ret
 
-;--- MOD R/M (OP_RM)
+;; --- MOD R/M (_Ex)
 
 dop_rm:
 	call getregmem
-	cmp al,0c0h
+	cmp AL,0c0h
 	jb dop05
-	jmp dop_r1			;if pure register reference
-dop05:					;<--- used by OP_M, OP_M64, OP_M80
-	call showsize		;print out size in AH
-dop06:					;<--- used by OP_MOFFS, OP_MXX, OP_MFLOAT, OP_MDOUBLE
-	or [preused],PRESEG	;needed even if there's no segment override
-						;because handling of LOCK prefix relies on it
+	jmp dop_r1			;; if pure register reference
+dop05:					;; <--- used by _Mx, _Q, _MLD
+	call showsize		;; print out size in AH
+dop06:					;; <--- used by _Ox, _Mxx, _MF, _MD
+	or [preused],PRESEG	;; needed even if there's no segment override
+						;; because handling of LOCK prefix relies on it
 	test [preflags],PRESEG
-	jz @F				;if no segment override
-	call showseg		;print segment name
-	mov al,':'
+	jz @F				;; if no segment override
+	call showseg		;; print segment name
+	mov AL,':'
 	stosb
 @@:
-	mov al,[ai.regmem]
-	and al,0c7h
+	mov AL,[ai.regmem]
+	and AL,0c7h
 	or [preused],PRE32A
 	test [preflags],PRE32A
 	jz @F
-	jmp dop18		;if 32-bit addressing
+	jmp dop18		;; if 32-bit addressing
 @@:
-	or [disflags], DIS_I_SHOW	;we'd like to show this address
-	mov [addrr],0	; zero out the address initially
-	cmp al,6
-	xchg ax,bx		;mov bx,ax
-	mov al,'['
+	or [disflags], DIS_I_SHOW	;; we'd like to show this address
+	mov [addrr],0	;; zero out the address initially
+	cmp AL,6
+	xchg AX,BX		;; mov BX,AX
+	mov AL,'['
 	stosb
-	je dop16		;if [xxxx]
-	and bx,7
-	mov bl,[rmtab+bx]
-	test bl,8
-	jnz dop09		;if BX
-	test bl,4
-	jz dop11		;if not BP
-	mov ax,'PB'		;"BP"
-	mov cx,[regs.rBP]
+	je dop16		;; if [xxxx]
+	and BX,7
+	mov BL,[rmtab+BX]
+	test BL,8
+	jnz dop09		;; if BX
+	test BL,4
+	jz dop11		;; if not BP
+	mov AX,'PB'		;; "BP"
+	mov CX,[regs.rBP]
 	test [preflags],PRESEG
-	jnz dop10		;if segment override
-	dec [segmnt]	;default is now SS
+	jnz dop10		;; if segment override
+	dec [segmnt]	;; default is now SS
 	jmp dop10
 dop09:
-	mov ax,'XB'		;"BX"
-	mov cx,[regs.rBX]
+	mov AX,'XB'		;; "BX"
+	mov CX,[regs.rBX]
 
 dop10:
-	mov [addrr],cx	;print it out, etc.
+	mov [addrr],CX	;; print it out, etc.
 	stosw
-	test bl,2+1
-	jz dop13		;if done
-	mov al,'+'
+	test BL,2+1
+	jz dop13		;; if done
+	mov AL,'+'
 	stosb
 dop11:
-	mov ax,'IS'		;"SI"
-	mov cx,[regs.rSI]
-	test bl,1
-	jz @F			;if SI
-	mov al,'D'		;"DI"
-	mov cx,[regs.rDI]
+	mov AX,'IS'		;; "SI"
+	mov CX,[regs.rSI]
+	test BL,1
+	jz @F			;; if SI
+	mov AL,'D'		;; "DI"
+	mov CX,[regs.rDI]
 @@:
-	add [addrr],cx	; base+index ([BX+SI, ....  )
+	add [addrr],CX	;; base+index ([BX+SI, ....  )
 	stosw
 dop13:
 	test [ai.regmem], 0c0h
-	jz dop17		;if no displacement
+	jz dop17		;; if no displacement
 	test [ai.regmem], 80h
-	jnz dop15		;if word displacement
+	jnz dop15		;; if word displacement
 	call disgetbyte
 	cbw
-	add [addrr],ax	; [base][+index]+byte
-	cmp al,0
-	mov ah,'+'
-	jge @F			;if >= 0
-	mov ah,'-'
-	neg al
+	add [addrr],AX	;; [base][+index]+byte
+	cmp AL,0
+	mov AH,'+'
+	jge @F			;; if >= 0
+	mov AH,'-'
+	neg AL
 @@:
-	mov [di],ah
-	inc di
-	call hexbyte	;print the byte displacement
-	jmp dop17		;done
+	mov [DI],AH
+	inc DI
+	call hexbyte	;; print the byte displacement
+	jmp dop17		;; done
 dop15:
-	mov al,'+'
+	mov AL,'+'
 	stosb
-dop16:				;<--- pure 16bit offset
+dop16:				;; <--- pure 16bit offset
 	call disgetword
-	add [addrr],ax
-	call hexword    ;print word displacement
+	add [addrr],AX
+	call hexword		;; print word displacement
 dop17:
-	mov al,']'
+	mov AL,']'
 	stosb
 	ret
 
-;--- 32-bit MOD REG R/M addressing.
+;; --- 32-bit MOD REG R/M addressing.
 
 dop18:
-	cmp al,5
-	jne @F			;if not just a disp32 address
-	mov al,'['
+	cmp AL,5
+	jne @F			;; if not just a disp32 address
+	mov AL,'['
 	stosb
-	call disp32		;get & display 32bit offset
+	call disp32		;; get & display 32bit offset
 	jmp dop27
 
 @@:
-	push ax
-	and al,7
-	cmp al,4
-	jne @F			;if no SIB
-	call disgetbyte	;get and save it
-	mov [ai.sibbyte],al
+	push AX
+	and AL,7
+	cmp AL,4
+	jne @F			;; if no SIB
+	call disgetbyte	;; get and save it
+	mov [ai.sibbyte],AL
 @@:
-	pop ax
-	test al,80h
-	jnz dop22		;if disp32
-	test al,40h
-	jz dop23		;if no disp8
+	pop AX
+	test AL,80h
+	jnz dop22		;; if disp32
+	test AL,40h
+	jz dop23		;; if no disp8
 	call disgetbyte
-	cmp al,0
-	jge @F			;if >= 0
-	neg al
-	mov byte ptr [di],'-'
-	inc di
+	cmp AL,0
+	jge @F			;; if >= 0
+	neg AL
+	mov byte ptr [DI],'-'
+	inc DI
 @@:
 	call hexbyte
-	jmp dop23		;done
+	jmp dop23		;; done
 
-;--- the disassembler displays offsets first;
-;--- example: mov ax,00001000[ebx][edi]
+;; --- the disassembler displays offsets first;
+;; --- example: mov AX,00001000[EBX][EDI]
 
 dop22:
-	call disp32		;get and display 32bit offset
+	call disp32		;; get and display 32bit offset
 
 dop23:
-	mov al,[ai.regmem]
-	and al,7
-	cmp al,4
-	jne showsqreg32	;if no SIB
-	mov al,[ai.sibbyte]
-if 1               ;bugfix: make 'u' correctly handle [ESP],[ESP+x]
-	cmp al,24h
+	mov AL,[ai.regmem]
+	and AL,7
+	cmp AL,4
+	jne showsqreg32	;; if no SIB
+	mov AL,[ai.sibbyte]
+if 1 ;; bugfix: make 'u' correctly handle [ESP],[ESP+x]
+	cmp AL,24h
 	jnz @F
-	mov al,4
+	mov AL,4
 	jmp showsqreg32
 @@:
 endif
-	and al,7
-	cmp al,5
-	jne @F			;if not [EBP]
+	and AL,7
+	cmp AL,5
+	jne @F			;; if not [EBP]
 	test [ai.regmem], 0c0h
-	jnz @F			;if MOD != 0
-	call disp32		;get and show 32-bit displacement instead of [EBP]
+	jnz @F			;; if MOD != 0
+	call disp32		;; get and show 32-bit displacement instead of [EBP]
 	jmp dop25
 
 @@:
-	call showsqreg32; render "[E&reg]"; al=reg
+	call showsqreg32	;; render "[E&reg]"; AL=reg
 dop25:
-	mov al,[ai.sibbyte]
-	shr al,1
-	shr al,1
-	shr al,1
-	and al,7
-	cmp al,4
-	je disbad1		;if illegal
+	mov AL,[ai.sibbyte]
+	shr AL,1
+	shr AL,1
+	shr AL,1
+	and AL,7
+	cmp AL,4
+	je disbad1		;; if illegal
 
-	call showsqreg32; render "[E&reg]; al=reg
-	dec di			; remove "]"
+	call showsqreg32	;; render "[E&reg]; AL=reg
+	dec DI			;; remove "]"
 
-	mov ah,[ai.sibbyte]
-	test ah,0c0h
-	jz dop27		;if SS = 0
-	mov al,'*'
+	mov AH,[ai.sibbyte]
+	test AH,0c0h
+	jz dop27		;; if SS = 0
+	mov AL,'*'
 	stosb
-	mov al,'2'
-	test ah,80h
-	jz @F			;if *2
-	mov al,'4'
-	test ah,40h
-	jz @F			;if *4
-	mov al,'8'
+	mov AL,'2'
+	test AH,80h
+	jz @F			;; if *2
+	mov AL,'4'
+	test AH,40h
+	jz @F			;; if *4
+	mov AL,'8'
 @@:
 	stosb
 dop27:
-	mov al,']'
+	mov AL,']'
 	stosb
 	ret
 
-;--- Memory-only reference (OP_M)
+;; --- Memory-only reference (_Mx)
 
 dop_m:
 	call getregmem
-	cmp al,0c0h
-	jae disbad1		;if it's a register reference
+	cmp AL,0c0h
+	jae disbad1		;; if it's a register reference
 	jmp dop05
 
 disbad1:
-	jmp disbad		;this is not supposed to happen
+	jmp disbad		;; this is not supposed to happen
 
-;--- Register reference from MOD R/M part (OP_R_MOD)
+;; --- Register reference from MOD R/M part (_Xx)
 
 dop_r_mod:
 	call getregmem
-	cmp al,0c0h
-	jb disbad1		;if it's a memory reference
+	cmp AL,0c0h
+	jb disbad1		;; if it's a memory reference
 	jmp dop_r1
 
-;--- Memory offset reference (OP_MOFFS)
+;; --- Memory offset reference (_Ox)
 
 dop_moffs:
-	call showsize	;print the size and save various things
-	mov al,5
+	call showsize	;; print the size and save various things
+	mov AL,5
 	test [preflags],PRE32A
-	jnz @F			;if 32-bit addressing
-	inc ax
+	jnz @F			;; if 32-bit addressing
+	inc AX
 @@:
-	mov [ai.regmem],al
-	jmp dop06		;don't show size
+	mov [ai.regmem],AL
+	jmp dop06		;; don't show size
 
-;--- Pure register reference (OP_R)
+;; --- Pure register reference (_Rx)
 
 dop_r:
 	call getregmem_r
-dop_r1:					;<--- used by OP_RM, OP_R_MOD, OP_R_ADD, OP_AX
-	and al,7			;entry point for regs from MOD R/M, and others
-	mov cl,[disflags2]
-	or [disflags],cl	;if it was variable size operand, the size
-						;should now be marked as known.
-	cmp ah,0
-	jl dop_reg			;if byte register
-	jz dop_wordreg		;if word register
-	cmp ah,20h			;qword register (mmx)?
+dop_r1:					;; <--- used by _Ex, _Xx, _rx, _Ax
+	and AL,7			;; entry point for regs from MOD R/M, and others
+	mov CL,[disflags2]
+	or [disflags],CL	;; if it was variable size operand, the size
+						;; should now be marked as known.
+	cmp AH,0
+	jl dop_reg			;; if byte register
+	jz dop_wordreg		;; if word register
+	cmp AH,20h			;; qword register (mmx)?
 	jz dop_regmmx
-	mov byte ptr [di],'E'
-	inc di
+	mov byte ptr [DI],'E'
+	inc DI
 dop_wordreg:
-	add al,8			; use the 16-bit names ( rgnam16 )
+	add AL,8			;; use the 16-bit names (rgnam16)
 dop_reg:
 	cbw
-	shl ax,1
-	xchg ax,bx			; mov bx,ax
-	mov ax,[rgnam816+bx]; get the register name
+	shl AX,1
+	xchg AX,BX			;; mov BX,AX
+	mov AX,[rgnam816+BX]		;; get the register name
 	stosw
 	ret
 dop_regmmx:
-	push ax
-	mov ax,"MM"
+	push AX
+	mov AX,"MM"
 	stosw
-	pop ax
-	add al,'0'
+	pop AX
+	add AL,'0'
 	stosb
 	ret
 
-;--- Register number embedded in the instruction (OP_R_ADD)
+;; --- Register number embedded in the instruction (_rx)
 
 dop_r_add:
-	mov al,[instru]
+	mov AL,[instru]
 	jmp dop_r1
 
-;--- AL or AX or EAX (OP_AX)
+;; --- AL or AX or EAX (_Ax)
 
 dop_ax:
-	mov al,0
+	mov AL,0
 	jmp dop_r1
 
-;--- QWORD mem (OP_M64).
-;--- this operand type is used by:
-;--- + cmpxchg8b
-;--- + fild, fistp
+;; --- QWORD mem (_Q).
+;; --- this operand type is used by:
+;; --- + cmpxchg8b
+;; --- + fild, fistp
 
 dop_m64:
-;	mov ax,'Q'		;print 'Q' +'WORD'
-	mov ah,20h		;size QWORD
+;;mov AX,'Q'		;; print 'Q' +'WORD'
+	mov AH,20h		;; size QWORD
 	jmp dop40
 
-;--- FLOAT (=REAL4) mem (OP_MFLOAT).
+;; --- FLOAT (=REAL4) mem (_MF).
 
 dop_mfloat:
-	mov ax,'LF'
+	mov AX,'LF'
 	stosw
-	mov al,'O'
+	mov AL,'O'
 	stosb
-	mov ax,'TA'
+	mov AX,'TA'
 	jmp dop38c
 
-;--- DOUBLE (=REAL8) mem (OP_MDOUBLE).
+;; --- DOUBLE (=REAL8) mem (_MD).
 
 dop_mdouble:
-	mov ax,'OD'
+	mov AX,'OD'
 	stosw
-	mov ax,'BU'
+	mov AX,'BU'
 	stosw
-	mov ax,'EL'
+	mov AX,'EL'
 dop38c:
 	stosw
 	call showptr
 	jmp dop42a
 
-;--- TBYTE (=REAL10) mem (OP_M80).
+;; --- TBYTE (=REAL10) mem (_MLD).
 
 dop_m80:
-	mov ax,0ff00h+'T'	;print 't' + 'byte'
+	mov AX,0ff00h+'T'	;; print 't' + 'byte'
 	stosb
 dop40:
 	call getregmem
-	cmp al,0c0h
-	jae disbad5		;if it's a register reference
-	and [disflags],not DIS_F_SHOW	;don't show this
+	cmp AL,0c0h
+	jae disbad5		;; if it's a register reference
+	and [disflags],not DIS_F_SHOW	;; don't show this
 	jmp dop05
 
-;--- far memory (OP_FARMEM).
-;--- this is either a FAR16 (DWORD) or FAR32 (FWORD) pointer
+;; --- far memory (_Mf).
+;; --- this is either a FAR16 (DWORD) or FAR32 (FWORD) pointer
 
 dop_farmem:
 	call dischk32d
-	jz @F			;if not dword far
+	jz @F			;; if not dword far
 	call showdwd
-	sub di,4		;erase "PTR "
+	sub DI,4		;; erase "PTR "
 @@:
-	mov ax,'AF'		;store "FAR "
+	mov AX,'AF'		;; store "FAR "
 	stosw
-	mov ax,' R'
+	mov AX,' R'
 	stosw
 
-;--- mem (OP_MXX).
+;; --- mem (_Mxx).
 
 dop_mxx:
-	and [disflags],not DIS_F_SHOW	;don't show this
+	and [disflags],not DIS_F_SHOW	;; don't show this
 dop42a:
 	call getregmem
-	cmp al,0c0h
-	jae disbad5		;if it's a register reference
-	jmp dop06		;don't show size
+	cmp AL,0c0h
+	jae disbad5		;; if it's a register reference
+	jmp dop06		;; don't show size
 
 disbad5:
 	jmp disbad
 
-;--- Check for ST(1) (OP_1CHK).
+;; --- Check for ST(1) (_ST1).
 
 dop_st1:
-	pop ax		;discard return address
-	mov al,[ai.regmem]
-	and al,7
-	cmp al,1
-	je @F		;if it's ST(1)
-	jmp da14	;another operand (but no comma)
+	pop AX		;; discard return address
+	mov AL,[ai.regmem]
+	and AL,7
+	cmp AL,1
+	je @F		;; if it's ST(1)
+	jmp da14	;; another operand (but no comma)
 @@:
-	jmp da21	;end of list
+	jmp da21	;; end of list
 
-;--- store segment register name (OP_SEGREG).
+;; --- store segment register name (_Rs).
 
 dop_segreg:
 	call getregmem_r
-	cmp al,6
-	jae disbad		;if not a segment register
-	cmp al,2
-	je @F			;if SS
-	and [disflags],not DIS_F_REPT	;clear flag:  don't repeat
+	cmp AL,6
+	jae disbad		;; if not a segment register
+	cmp AL,2
+	je @F			;; if SS
+	and [disflags],not DIS_F_REPT	;; clear flag:  don't repeat
 @@:
-	cmp al,4
-	jb @F			;if not FS or GS
-	mov [ai.dismach],3	;(no new 486-686 instructions involve seg regs)
+	cmp AL,4
+	jb @F			;; if not FS or GS
+	mov [ai.dismach],3	;; (no new 486-686 instructions involve seg regs)
 @@:
-	add al,8+8		;segreg names are behind 8-bit/16-bit regnames
-	jmp dop_reg		;go print it out
+	add AL,8+8		;; segreg names are behind 8-bit/16-bit regnames
+	jmp dop_reg		;; go print it out
 
-;--- Sign-extended immediate byte (OP_IMMS8). "push xx"
+;; --- Sign-extended immediate byte (_Ds). "push xx"
 
 dop_imms8:
 	call showsizeop
 	call disgetbyte
-	cmp al,0
-	xchg ax,bx		;mov bl,al
-	mov al,'+'
-	jge @F			;if >= 0
-	neg bl
-	mov al,'-'
+	cmp AL,0
+	xchg AX,BX		;; mov BL,AL
+	mov AL,'+'
+	jge @F			;; if >= 0
+	neg BL
+	mov AL,'-'
 @@:
 	stosb
-	xchg ax,bx		;mov al,bl
-	jmp dop59a		;call hexbyte and return
+	xchg AX,BX		;; mov AL,BL
+	jmp dop59a		;; call hexbyte and return
 
-;--- Immediate byte (OP_IMM8).
+;; --- Immediate byte (_Db).
 
 dop_imm8:
 	call disgetbyte
 dop59a:
-	jmp hexbyte		;call hexbyte and return
+	jmp hexbyte		;; call hexbyte and return
 
-;--- Set flag to always show size (OP_SHOSIZ).
+;; --- Set flag to always show size (_N).
 
 dop_shosiz:
 	or [disflags],DIS_I_SHOWSIZ
-	pop ax			;discard return address
-	jmp da14		;next operand
+	pop AX			;; discard return address
+	jmp da14		;; next operand
 
 disasm endp
 
 disbad proc
 if FLATSS
 	.386
-	mov esp,[run_sp]	;pop junk off stack
+	mov ESP,[run_sp]	;; pop junk off stack
 else
-	mov sp,[run_sp]		;pop junk off stack
+	mov SP,[run_sp]		;; pop junk off stack
 endif
-	mov ax,offset da13
-	push ax
+	mov AX,offset da13
+	push AX
 	mov [dis_n],0
-	mov word ptr [preflags],0		;clear preflags and preused
-	mov [rmsize],80h				;don't display any memory
-	mov word ptr [ai.dismach],0		;forget about the machine type
-	and [disflags],not DIS_I_SHOW	;and flags
+	mov word ptr [preflags],0		;; clear preflags and preused
+	mov [rmsize],80h				;; don't display any memory
+	mov word ptr [ai.dismach],0		;; forget about the machine type
+	and [disflags],not DIS_I_SHOW	;; and flags
 	call disgetbyte
-	mov di,offset prefixlist
-	mov cx,N_PREFIX
+	mov DI,offset prefixlist
+	mov CX,N_PREFIX
 	repne scasb
-	je @F			;if it's a named prefix
+	je @F			;; if it's a named prefix
 	dec [dis_n]
-	mov bx,MN_DB	;offset of 'DB' mnemonic
-	mov si,OPLIST_26+OPTYPES_BASE;this says OP_IMM8
+	mov BX,MN_DB	;; offset of 'DB' mnemonic
+	mov SI,OPLIST_26+OPTYPES_BASE	;; this says _Db
 	ret
 @@:
-	or [disflags],DIS_I_UNUSED	;print special flag
-	mov bx,N_PREFIX-1
-	sub bx,cx
-	shl bx,1
-	cmp bx,6*2
-	jb @F			;if SEG directive
-	mov bx,[prefixmnem+bx-6*2]
-	mov si,OPTYPES_BASE	;no operand
+	or [disflags],DIS_I_UNUSED	;; print special flag
+	mov BX,N_PREFIX-1
+	sub BX,CX
+	shl BX,1
+	cmp BX,6*2
+	jb @F			;; if SEG directive
+	mov BX,[prefixmnem+BX-6*2]
+	mov SI,OPTYPES_BASE	;; no operand
 	ret
 @@:
-	lea si,[bx+OPLIST_40+OPTYPES_BASE]	;this is OP_ES
-	mov bx,MN_SEG
+	lea SI,[BX+OPLIST_40+OPTYPES_BASE]	;; this is _ES
+	mov BX,MN_SEG
 	ret
 disbad endp
 
-;--- relative jumps
+;; --- relative jumps
 
 dop_relxx proc
 
-;--- 8-bit relative jump (OP_REL8)
+;; --- 8-bit relative jump (_Jb)
 
 dop_rel8::
 	call disgetbyte
 	cbw
 	jmp dop_rel16
 
-;--- 16/32-bit relative jump (OP_REL1632)
+;; --- 16/32-bit relative jump (_Jv)
 
 dop_rel1632::
 	call disgetword
 	call dischk32d
-	jz dop_rel16	;if not 32-bit distance
-	push ax
+	jz dop_rel16	;; if not 32-bit distance
+	push AX
 if ?PM
-	test [bCSAttr],CS32ATTR	;for 32bit code segments
-	jnz @F			;no need to display "DWORD "
+	test [bCSAttr],CS32ATTR	;; for 32bit code segments
+	jnz @F			;; no need to display "DWORD "
 endif
-	call showdwd	;"DWORD PTR "
-	sub di,4		;erase "PTR "
+	call showdwd	;; "DWORD PTR "
+	sub DI,4		;; erase "PTR "
 @@:
-	pop dx
+	pop DX
 	call disgetword
-	mov bx,[u_addr+0]
-	add bx,[dis_n]
-	add dx,bx
-	adc ax,[u_addr+2]
+	mov BX,[u_addr+0]
+	add BX,[dis_n]
+	add DX,BX
+	adc AX,[u_addr+2]
 	call hexword
-	xchg ax,dx
-	jmp hexword		;call hexword and return
+	xchg AX,DX
+	jmp hexword		;; call hexword and return
 
-dop_rel16:			;16-bit distance
+dop_rel16:			;; 16-bit distance
 if ?PM
 	test [bCSAttr], CS32ATTR
 	jnz @F
 endif
-	add ax,[u_addr]
-	add ax,[dis_n]
-	jmp hexword		;call hexword and return
+	add AX,[u_addr]
+	add AX,[dis_n]
+	jmp hexword		;; call hexword and return
 if ?PM
 @@:
 	.386
-	cwde	;=movsx eax,ax
-	add eax,dword ptr [u_addr]
-	add eax,dword ptr [dis_n]
+	cwde	;; =movsx EAX,AX
+	add EAX,dword ptr [u_addr]
+	add EAX,dword ptr [dis_n]
 	jmp hexdword
 	.8086
 endif
 
 dop_relxx endp
 
-;--- Here are the routines for printing out the operands themselves.
+;; --- Here are the routines for printing out the operands themselves.
 
-;--- CRx (OP_CR), DRx (OP_DR), TRx (OP_TR), MMx (OP_MMX)
+;; --- CRx (_CRx), DRx (_DRx), TRx (_TRx), MMx (_MMx)
 
 dop_cr proc
 	call getregmem_r
-	mov bx,"RC"		; "CRx"
-	cmp al,4
-	ja disbad4		;if too large
+	mov BX,"RC"		;; "CRx"
+	cmp AL,4
+	ja disbad4		;; if too large
 	jne @F
-	mov [ai.dismach],5	;CR4 is new to the 586
+	mov [ai.dismach],5	;; CR4 is new to the 586
 @@:
 	cmp [idxins],SPARSE_BASE+22h
-	jne dop55		;if not MOV CRx,xx
-	cmp al,1
-	jne dop55		;if not CR1
+	jne dop55		;; if not MOV CRx,xx
+	cmp AL,1
+	jne dop55		;; if not CR1
 disbad4:
-	jmp disbad		;can't MOV CR1,xx
+	jmp disbad		;; can't MOV CR1,xx
 
-;--- DRx (OP_DR).
+;; --- DRx (_DRx).
 
 dop_dr::
 	call getregmem_r
-	mov bx,"RD"		; "DRx"
-	mov cx,-1		; no max or illegal value (remove?)
+	mov BX,"RD"		;; "DRx"
+	mov CX,-1		;; no max or illegal value (remove?)
 	jmp dop55
 
-;--- MMx (OP_MMX)
+;; --- MMx (_MMx)
 
 dop_mmx::
 	call getregmem_r
-	mov bx,"MM"		; "MMx"
+	mov BX,"MM"		;; "MMx"
 	jmp dop55
 
-;--- TRx (OP_TR).
+;; --- TRx (_TRx).
 
 dop_tr::
 	call getregmem_r
-	cmp al,3
-	jb disbad4		;if too small
-	cmp al,6
-	jae @F			;if TR6-7
-	mov [ai.dismach],4	;TR3-5 are new to the 486
+	cmp AL,3
+	jb disbad4		;; if too small
+	cmp AL,6
+	jae @F			;; if TR6-7
+	mov [ai.dismach],4	;; TR3-5 are new to the 486
 @@:
-	mov bx,"RT"		; "TRx"
+	mov BX,"RT"		;; "TRx"
 dop55:
-	xchg ax,bx
-	stosw			;store XX
-	xchg ax,bx
-	or al,'0'
+	xchg AX,BX
+	stosw			;; store XX
+	xchg AX,BX
+	or AL,'0'
 	stosb
 	ret
 dop_cr endp
 
-;--- ST(I) (OP_STI).
+;; --- ST(I) (_STi).
 
 dop_sti proc
-	mov al,[ai.regmem]
-	and al,7
-	xchg ax,bx		;mov bx,ax
-	mov ax,'TS'
-	stosw			;store ST(bl)
-	mov al,'('
+	mov AL,[ai.regmem]
+	and AL,7
+	xchg AX,BX		;; mov BX,AX
+	mov AX,'TS'
+	stosw			;; store ST(BL)
+	mov AL,'('
 	stosb
-	mov ax,')0'
-	or al,bl
+	mov AX,')0'
+	or AL,BL
 	stosw
 	ret
 dop_sti endp
 
-;--- far immediate (OP_FARIMM). Either FAR16 or FAR32
+;; --- far immediate (_Af). Either FAR16 or FAR32
 
 dop_farimm proc
-	mov bx, sp
+	mov BX, SP
 	call disgetword
-	push ax
+	push AX
 	call dischk32d
-	jz @F			; if not 32-bit address
+	jz @F			;; if not 32-bit address
 	call disgetword
-	push ax
+	push AX
 @@:
-	call disgetword	; get segment part
+	call disgetword	;; get segment part
 	call hexword
-	mov al,':'
+	mov AL,':'
 	stosb
 @@:
-	pop ax
+	pop AX
 	call hexword
-	cmp bx, sp
+	cmp BX, SP
 	jnz @B
 	ret
 dop_farimm endp
 
-;--- Immediate data (OP_IMM)
+;; --- Immediate data (_Ix)
 
 dop_imm proc
-	cmp ah,0
-	jl dop03		;if just a byte
+	cmp AH,0
+	jl dop03		;; if just a byte
 	pushf
 	test [disflags], DIS_I_SHOWSIZ
-	jz @F			;if we don't need to show the size
-	call showsize	;print size in AH
-	sub di,4		;erase "PTR "
+	jz @F			;; if we don't need to show the size
+	call showsize	;; print size in AH
+	sub DI,4		;; erase "PTR "
 @@:
 	call disgetword
 	popf
-	jz @F			;if just a word
-	push ax
-	call disgetword	;print the high order word
+	jz @F			;; if just a word
+	push AX
+	call disgetword	;; print the high order word
 	call hexword
-	pop ax
+	pop AX
 @@:
 	call hexword
 	ret
 
 dop03:
-	call disgetbyte	;print immediate byte
+	call disgetbyte	;; print immediate byte
 	call hexbyte
 	ret
 dop_imm endp
 
-;--- 32-bit addressing without SIB
-;--- store "[E&reg]" at DI
+;; --- 32-bit addressing without SIB
+;; --- store "[E&reg]" at DI
 
 showsqreg32 proc
 	cbw
-	shl ax,1
-	xchg ax,bx
-	mov ax, 'E['
+	shl AX,1
+	xchg AX,BX
+	mov AX, 'E['
 	stosw
-	mov ax, [rgnam16+bx]
+	mov AX, [rgnam16+BX]
 	stosw
-	mov al,']'
+	mov AL,']'
 	stosb
 	ret
 showsqreg32 endp
 
 showsizeop proc
-;--- for PUSH imm8 add D/W to opcode if size differs from default (WORD/DWORD)
+;; --- for PUSH imm8 add D/W to opcode if size differs from default (WORD/DWORD)
 	cmp [instru],6ah
 	jnz sso_skip
 	call dischk32d
 if ?PM
-	mov ah,[bCSAttr]
+	mov AH,[bCSAttr]
 	.286
-	shr ah,2		;40h -> 10h (=PRE32D)
+	shr AH,2		;; 40h -> 10h (=PRE32D)
 	.8086
 else
-	mov ah,0
+	mov AH,0
 endif
-	mov al,'W'
-	test ah,PRE32D
+	mov AL,'W'
+	test AH,PRE32D
 	jnz @F
-	mov al,'D'
+	mov AL,'D'
 @@:
-	xor ah,[preflags]
-	test ah,PRE32D
+	xor AH,[preflags]
+	test AH,PRE32D
 	jz sso_skip
-	mov [di-4],al
+	mov [DI-4],AL
 sso_skip:
 	ret
 showsizeop endp
 
-;--- DISCHK32D - Check for 32 bit operand size prefix (66h).
+;; --- DISCHK32D - Check for 32 bit operand size prefix (66h).
 
 dischk32d proc
 	or [preused],PRE32D
@@ -1400,271 +1400,271 @@ dischk32d proc
 	ret
 dischk32d endp
 
-;   GETREGMEM_R - Get the reg part of the reg/mem part of the instruction
-;   Uses    CL
+;;  GETREGMEM_R - Get the reg part of the reg/mem part of the instruction
+;;  Uses    CL
 
 getregmem_r proc
 	call getregmem
-	mov cl,3
-	shr al,cl
-	and al,7
+	mov CL,3
+	shr AL,CL
+	and AL,7
 	ret
 getregmem_r endp
 
-;--- GETREGMEM - Get the reg/mem part of the instruction
+;; --- GETREGMEM - Get the reg/mem part of the instruction
 
 getregmem proc
 	test [preused],GOTREGM
-	jnz @F			;if we have it already
+	jnz @F			;; if we have it already
 	or [preused],GOTREGM
-	call disgetbyte	;get the byte
-	mov [ai.regmem],al	;save it away
+	call disgetbyte	;; get the byte
+	mov [ai.regmem],AL	;; save it away
 @@:
-	mov al,[ai.regmem]
+	mov AL,[ai.regmem]
 	ret
 getregmem endp
 
-;   DISP32 - Print 32-bit displacement for addressing modes.
-;   Entry   None
-;   Exit    None
-;   Uses    AX
+;;  DISP32 - Print 32-bit displacement for addressing modes.
+;;  Entry   None
+;;  Exit    None
+;;  Uses    AX
 
 disp32 proc
 	call disgetword
-	push ax
+	push AX
 	call disgetword
 	call hexword
-	pop ax
+	pop AX
 	call hexword
 	ret
 disp32 endp
 
-;   SHOWSEG - Show the segment descriptor in SEGMNT
-;   Entry   DI  Where to put it
-;   Exit    DI  Updated
-;   Uses    AX, BX
+;;  SHOWSEG - Show the segment descriptor in SEGMNT
+;;  Entry   DI  Where to put it
+;;  Exit    DI  Updated
+;;  Uses    AX, BX
 
 showseg proc
-	mov al,[segmnt]	;segment number
+	mov AL,[segmnt]	;; segment number
 	cbw
-	shl ax,1
-	xchg ax,bx		;mov bx,ax
-	mov ax, [segrgnam+bx] ;get register name
+	shl AX,1
+	xchg AX,BX		;; mov BX,AX
+	mov AX, [segrgnam+BX]	;; get register name
 	stosw
 	ret
 showseg endp
 
-;   SHOWOP  Show the op code
-;   Entry   SI  Null-terminated string containing the op mnemonic
-;   Exit    DI  Address of next available byte in output line
-;           (>= offset line_out + 32 due to padding)
-;   Uses    AL
+;;  SHOWOP  Show the op code
+;;  Entry   SI  Null-terminated string containing the op mnemonic
+;;  Exit    DI  Address of next available byte in output line
+;;          (>= offset line_out + 32 due to padding)
+;;  Uses    AL
 
 showop proc
-	mov di,offset line_out+MNEMONOFS
+	mov DI,offset line_out+MNEMONOFS
 @@:
 	lodsb
-	mov ah,al
-	and al,7Fh
+	mov AH,AL
+	and AL,7Fh
 	stosb
-	and ah,ah
+	and AH,AH
 	jns @B
-	mov al,' '
+	mov AL,' '
 @@:
 	stosb
-	cmp di,offset line_out+MNEMONOFS+8
+	cmp DI,offset line_out+MNEMONOFS+8
 	jb @B
 	ret
 showop endp
 
-;   SHOWSIZE - Print a description of the size
-;   Entry   AH  10h=DWORD, 00h=WORD, F0h=BYTE, 20h=QWORD
-;   Uses    AX
+;;  SHOWSIZE - Print a description of the size
+;;  Entry   AH  10h=DWORD, 00h=WORD, F0h=BYTE, 20h=QWORD
+;;  Uses    AX
 
-;   SHOWPTR - Print " PTR"
-;   Uses    AX
+;;  SHOWPTR - Print " PTR"
+;;  Uses    AX
 
-;   SHOWDWD - Print "DWORD PTR"
-;   Uses    AX
+;;  SHOWDWD - Print "DWORD PTR"
+;;  Uses    AX
 
 showsize proc
-	mov [rmsize],ah	;save r/m size
-	mov [sizeloc],di;save where we're putting this
-	mov al,'Q'
-	cmp ah,20h
+	mov [rmsize],AH	;; save r/m size
+	mov [sizeloc],DI	;; save where we're putting this
+	mov AL,'Q'
+	cmp AH,20h
 	jz showqwd
-	cmp ah,0
-	jg showdwd	;if dword
-	je showwd	;if word
-	mov ax,'YB'
+	cmp AH,0
+	jg showdwd	;; if dword
+	je showwd	;; if word
+	mov AX,'YB'
 	stosw
-	mov ax,'ET'
+	mov AX,'ET'
 	jmp ssz3
-showdwd::		;<---
-	mov al,'D'
+showdwd::		;; <---
+	mov AL,'D'
 showqwd:
 	stosb
 showwd:
-	mov ax,'OW'
+	mov AX,'OW'
 	stosw
-	mov ax,'DR'
+	mov AX,'DR'
 ssz3:
 	stosw
-showptr::		;<---
-	mov ax,'P '
+showptr::		;; <---
+	mov AX,'P '
 	stosw
-	mov ax,'RT'
+	mov AX,'RT'
 	stosw
-	mov al,' '
+	mov AL,' '
 	stosb
 	ret
 showsize endp
 
-;   DISGETBYTE - Get byte for disassembler.
-;   Entry   None
-;   Exit    AL  Next byte in instruction stream
-;   Uses    None
+;;  DISGETBYTE - Get byte for disassembler.
+;;  Entry   None
+;;  Exit    AL  Next byte in instruction stream
+;;  Uses    None
 
 disgetbyte proc
-	push ds
+	push DS
 if ?PM
 	test [bCSAttr], CS32ATTR
 	jnz @F
 endif
-	push si
-	mov si,[u_addr]
-	add si,[dis_n]		;index to the right byte
-	mov ds,[u_addr+4]
-	lodsb 				;get the byte
-	pop si
-	pop ds
-	inc [dis_n]			;indicate that we've gotten this byte
+	push SI
+	mov SI,[u_addr]
+	add SI,[dis_n]		;; index to the right byte
+	mov DS,[u_addr+4]
+	lodsb 				;; get the byte
+	pop SI
+	pop DS
+	inc [dis_n]			;; indicate that we've gotten this byte
 	ret
 if ?PM
 	.386
 @@:
-	push esi
-	lds esi,fword ptr [u_addr]
-	add esi,dword ptr cs:[dis_n]	;index to the right byte
-	lodsb ds:[esi]
-	pop esi
-	pop ds
+	push ESI
+	lds ESI,fword ptr [u_addr]
+	add ESI,dword ptr CS:[dis_n]	;; index to the right byte
+	lodsb DS:[ESI]
+	pop ESI
+	pop DS
 	inc [dis_n]
 	ret
 	.8086
 endif
 disgetbyte endp
 
-;   DISGETWORD - Get word for disassembler.
-;   Entry   None
-;   Exit    AX  Next word
-;   Uses    None
+;;  DISGETWORD - Get word for disassembler.
+;;  Entry   None
+;;  Exit    AX  Next word
+;;  Uses    None
 
 disgetword proc
-	push ds
+	push DS
 if ?PM
 	test [bCSAttr], CS32ATTR
 	jnz @F
 endif
-	push si
-	mov si,[u_addr]
-	add si,[dis_n]		;index to the right byte
-	mov ds,[u_addr+4]
+	push SI
+	mov SI,[u_addr]
+	add SI,[dis_n]		;; index to the right byte
+	mov DS,[u_addr+4]
 	lodsw
-	pop si
-	pop ds
+	pop SI
+	pop DS
 	add [dis_n],2
 	ret
 if ?PM
 	.386
 @@:
-	push esi
-	lds esi,fword ptr [u_addr]
-	add esi,dword ptr cs:[dis_n]	;index to the right byte
-	lodsw ds:[esi]
-	pop esi
-	pop ds
+	push ESI
+	lds ESI,fword ptr [u_addr]
+	add ESI,dword ptr CS:[dis_n]	;; index to the right byte
+	lodsw DS:[ESI]
+	pop ESI
+	pop DS
 	add [dis_n],2
 	ret
 	.8086
 endif
 disgetword endp
 
-;   DISSHOWBYTES - Show bytes for the disassembler.
-;   Entry   BX  Number of bytes (must be > 0)
-;   Exit        u_addr updated
-;   Uses    BX, SI.
+;;  DISSHOWBYTES - Show bytes for the disassembler.
+;;  Entry   BX  Number of bytes (must be > 0)
+;;  Exit        u_addr updated
+;;  Uses    BX, SI.
 
 disshowbytes proc
 if ?PM
 	test [bCSAttr], CS32ATTR
 	jnz dissb_1
 endif
-	mov si,[u_addr]
-	mov ds,[u_addr+4]
+	mov SI,[u_addr]
+	mov DS,[u_addr+4]
 @@:
 	lodsb
 	call hexbyte
-	dec bx
+	dec BX
 	jnz @B
-	@RestoreSeg ds
-	mov [u_addr],si
+	@RestoreSeg DS
+	mov [u_addr],SI
 	ret
 if ?PM
 	.386
 dissb_1:
-	lds esi,fword ptr [u_addr]
+	lds ESI,fword ptr [u_addr]
 @@:
-	lodsb ds:[esi]
+	lodsb DS:[ESI]
 	call hexbyte
-	dec bx
+	dec BX
 	jnz @B
-	@RestoreSeg ds
-	mov dword ptr [u_addr],esi
+	@RestoreSeg DS
+	mov dword ptr [u_addr],ESI
 	ret
     .8086
 endif
 disshowbytes endp
 
-;   MOVEOVER - Move the line to the right - disassembler subfunction.
-;   Entry   DI  Last address + 1 of line so far
-;   Exit    CX  Number of bytes to move
-;   DI  Updated
-;   Uses    SI
+;;  MOVEOVER - Move the line to the right - disassembler subfunction.
+;;  Entry   DI  Last address + 1 of line so far
+;;  Exit    CX  Number of bytes to move
+;;  DI  Updated
+;;  Uses    SI
 
 moveover proc
 	cmp [sizeloc],0
-	je @F		;if sizeloc not saved
-	add [sizeloc],cx
+	je @F		;; if sizeloc not saved
+	add [sizeloc],CX
 @@:
-	mov si,di
-	add di,cx
-	mov cx,di
-	sub cx,offset line_out+MNEMONOFS
-	push di
+	mov SI,DI
+	add DI,CX
+	mov CX,DI
+	sub CX,offset line_out+MNEMONOFS
+	push DI
 	std
-	dec si
-	dec di
+	dec SI
+	dec DI
 	rep movsb
-	pop di
+	pop DI
 	cld
 	ret
 moveover endp
 
-;   TAB_TO - Space fill until reaching the column indicated by AX.
-;   (Print a new line if necessary.)
+;;  TAB_TO - Space fill until reaching the column indicated by AX.
+;;  (Print a new line if necessary.)
 
 tab_to proc
-	push ax
-	sub ax,di
-	ja @F			;if there's room on this line
+	push AX
+	sub AX,DI
+	ja @F			;; if there's room on this line
 	call trimputs
-	mov di,offset line_out
+	mov DI,offset line_out
 @@:
-	pop cx
-	sub cx,di
-	mov al,' '
-	rep stosb		;space fill to the right end
+	pop CX
+	sub CX,DI
+	mov AL,' '
+	rep stosb		;; space fill to the right end
 	ret
 tab_to endp
 
