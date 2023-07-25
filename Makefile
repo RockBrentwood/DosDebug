@@ -98,6 +98,7 @@ clean:
 	${RM} ${LogDir}Debug*.lst
 	${RM} MakeTabs$X
 clobber: clean
+	${RM} DebugTab.inc
 	${RM} ${BinDir}Debug*.bin
 	${RM} ${BinDir}Debug*.com
 	${RM} ${BinDir}Debug*.exe

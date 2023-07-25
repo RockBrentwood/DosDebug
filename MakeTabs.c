@@ -1,1298 +1,816 @@
-/*
- * This program reads in the various data files, performs some checks,
- * and spits out the tables needed for assembly and disassembly.
- *
- * The input files are:
- *      Op.set   Instruction set
- *      Op.key   Translation from one- or two-character keys to operand list types
- *      Op.ord   Ordering relations to enforce on the operands
- *
- * The output tables are written to DebugTab.inc, which is
- * included into Debug.asm.
- */
+// This program reads in the various data files, performs some checks, and spits out the tables needed for assembly and disassembly.
+// The input files are:
+//	Op.set	the instruction set,
+//	Op.key	the translation from one- or two-character keys to operand list types,
+//	Op.ord	the ordering relations to enforce on the operands.
+// The output tables are written to DebugTab.inc, which is included into Debug.asm.
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdbool.h>
 #include <ctype.h>
 #include <errno.h>
 
-#define MAX_OL_TYPES        82
-#define MAX_N_ORDS          30
-#define LINELEN            132
-#define MAX_ASM_TAB       2048
-#define MAX_MNRECS         400
-#define MAX_SAVED_MNEMS     10
-#define MAX_SLASH_ENTRIES   20
-#define MAX_HASH_ENTRIES    15
-#define MAX_STAR_ENTRIES    15
-#define MAX_LOCKTAB_ENTRIES 50
-#define MAX_AGROUP_ENTRIES  14
-#define MSHIFT              12 /* number of bits below machine type */
-#define SORTMN              0  /* sort mnemonics */
+const int ShiftM = 12; // The number of bits below the CPU type.
+const bool SortOps = false; // Sort the operator mnemonics.
 
-typedef char    Boolean;
-#define True    1
-#define False   0
+#define Members(X) (sizeof (X)/sizeof *(X))
 
-#define NUMBER(x)   (sizeof(x) / sizeof(*x))
+int KeyN = 0;
+typedef struct KeyT *KeyT;
+struct KeyT { short Key, Value, Width; };
 
-char line[LINELEN];
-const char *filename;
-int lineno;
+#define TypeMax 82
+int Keys = 0;
+struct KeyT KeyDict[TypeMax];
+char *NameTab[TypeMax]; // Contains the lines of Op.key.
+int OffsetTab[TypeMax];
+bool IsSmall[TypeMax];
 
-int n_keys = 0;
-struct keytab {
- short key;  /* */
- short value;
- short width;
+#define OrdMax 30
+int Ords = 0;
+KeyT Ord0[OrdMax], Ord1[OrdMax];
+
+// Equates for the assembler table.
+// These should be the same as in Debug.asm.
+typedef enum {
+   Mach0A = 0xed, Mach6A = 0xf3, LockableA = 0xf4, LockRepA = 0xf5, SegA = 0xf6, AaxA = 0xf7,
+   D16A = 0xf8, D32A = 0xf9, WaitA = 0xfa, OrgA = 0xfb, DdA = 0xfc, DwA = 0xfd, DbA = 0xfe, EndA = 0xff
+} AsmOp;
+#define AsmMax 0x800
+int Asms = 0; AsmOp AsmTab[AsmMax];
+
+typedef struct OpT *OpT;
+struct OpT {
+   OpT Next;
+   char *Id;
+   short Len;
+   short Offset; // ???
+   short AsmOffset; // Offset in AsmTab.
 };
+#define OpMax 400
+int Ops; struct OpT OpList[OpMax]; OpT OpBase;
+#define SavedMax 10
+int Saveds = 0; int SavedTab[SavedMax];
+#define SlashMax 20
+int Slashes; int SlashSeq[SlashMax], SlashOp[SlashMax];
+#define HashMax 15
+int Hashes; int HashSeq[HashMax], HashOp[HashMax];
+#define StarMax 15
+int Stars; int StarSeq[StarMax], StarOp[StarMax];
+#define LockMax 50
+int Locks; int LockTab[LockMax];
+#define AGroupMax 14
+int AGroups; int AGroupI[AGroupMax], AGroupInf[AGroupMax];
 
-int n_ol_types = 0;
-struct keytab olkeydict[MAX_OL_TYPES];
-char *olnames[MAX_OL_TYPES];  // containes lines of Op.key
-int oloffset[MAX_OL_TYPES];
+volatile void Fatal(const char *Format, ...) {
+   va_list AP; va_start(AP, Format), vfprintf(stderr, Format, AP), va_end(AP);
+   putc('\n', stderr);
+   exit(EXIT_FAILURE);
+}
 
-int n_ords = 0;
-struct keytab *keyord1[MAX_N_ORDS];
-struct keytab *keyord2[MAX_N_ORDS];
-Boolean ordsmall[MAX_OL_TYPES];
+const char *File;
+int Line;
 
-/*
- * Equates for the assembler table.
- * These should be the same as in Debug.asm.
- */
+FILE *OpenRead(const char *Path) {
+   FILE *InF = fopen(Path, "r"); if (InF == NULL) perror(Path), exit(EXIT_FAILURE);
+   File = Path, Line = 0;
+   return InF;
+}
 
-#define ASM_END     0xff
-#define ASM_DB      0xfe
-#define ASM_DW      0xfd
-#define ASM_DD      0xfc
-#define ASM_ORG     0xfb
-#define ASM_WAIT    0xfa
-#define ASM_D32     0xf9
-#define ASM_D16     0xf8
-#define ASM_AAX     0xf7
-#define ASM_SEG     0xf6
-#define ASM_LOCKREP 0xf5
-#define ASM_LOCKABLE    0xf4
-#define ASM_MACH6   0xf3
-#define ASM_MACH0   0xed
+volatile void Error(const char *Format, ...) {
+   fprintf(stderr, "Line %d of `%s': ", Line, File);
+   va_list AP; va_start(AP, Format), vfprintf(stderr, Format, AP), va_end(AP);
+   putc('\n', stderr);
+   exit(EXIT_FAILURE);
+}
 
-int n_asm_tab = 0;
-unsigned char asmtab[MAX_ASM_TAB];
+void *Allocate(unsigned N, const char *Why) {
+   void *X = malloc(N); if (X == NULL) Fatal("Cannot allocate %u bytes for %s", N, Why);
+   return X;
+}
 
-struct mnrec {
-	struct mnrec *next;
-	char  *string;
-	short len;
-	short offset;    /* ??? */
-	short asmoffset; /* offset in asmtab */
-};
+char LineBuf[132];
+const size_t LineMax = Members(LineBuf);
 
-int num_mnrecs;
-struct mnrec mnlist[MAX_MNRECS];
-struct mnrec *mnhead;
+bool GetLine(FILE *InF) {
+   while (fgets(LineBuf, LineMax, InF) != NULL) {
+      Line++;
+      if (LineBuf[0] == '#') continue;
+      int N = strlen(LineBuf) - 1;
+      if (N > 0 && LineBuf[N] == '\r') LineBuf[N--] = '\0';
+      if (N < 0 || LineBuf[N] != '\n') Error("too long.");
+      if (N > 0) { LineBuf[N] = '\0'; return true; }
+   }
+   return false;
+}
 
-int n_saved_mnems = 0;
-int saved_mnem[MAX_SAVED_MNEMS];
+short GetKey(char **SP) {
+   char *S = *SP;
+   if (*S == ' ' || *S == '\t' || *S == ';' || *S == '\0') Error("key expected");
+   short Key = *S++;
+   if (*S != ' ' && *S != '\t' && *S != ';' && *S != '\0') {
+      Key = (Key << 8) | *S++;
+      if (*S != ' ' && *S != '\t' && *S != ';' && *S != '\0') Error("key too long");
+   }
+   *SP = S;
+   return Key;
+}
 
-int n_slash_entries;
-int slashtab_seq[MAX_SLASH_ENTRIES];
-int slashtab_mn[MAX_SLASH_ENTRIES];
+// Mark the given key pointer as small, as well as anything that, according to Op.ord, is smaller than it.
+void MarkSmall(KeyT K) {
+   IsSmall[K - KeyDict] = true;
+   for (int o = 0; o < Ords; o++) if (Ord1[o] == K) MarkSmall(Ord0[o]);
+}
 
-int n_hash_entries;
-int hashtab_seq[MAX_HASH_ENTRIES];
-int hashtab_mn[MAX_HASH_ENTRIES];
+// Add the bytecode Op to the assembler table (AsmTab).
+// The format of this table is described in a long comment in Debug.asm, somewhere within the mini-assembler.
+void AddAsm(AsmOp Op) {
+   if (Asms >= AsmMax) Error("Assembler table overflow.");
+   AsmTab[Asms++] = Op;
+}
 
-int n_star_entries;
-int startab_seq[MAX_STAR_ENTRIES];
-int startab_mn[MAX_STAR_ENTRIES];
+unsigned char GetCPU(char **SP) {
+   char *S = *SP;
+   if (*S != ';') return '\0';
+   S++;
+   if (*S < '0' || *S > '6') Error("bad machine type");
+   unsigned char CPU = *S++ - '0';
+   AddAsm((AsmOp)(Mach0A + CPU));
+   *SP = S;
+   return CPU;
+}
 
-int n_locktab;
-int locktab[MAX_LOCKTAB_ENTRIES];
+KeyT LookUpKey(short Key) {
+   for (KeyT K = KeyDict; K < KeyDict + Members(KeyDict); K++) if (Key == K->Key) return K;
+   Error("can't find key %X", Key);
+   return NULL;
+}
 
-int n_agroups;
-int agroup_i[MAX_AGROUP_ENTRIES];
-int agroup_inf[MAX_AGROUP_ENTRIES];
+static inline KeyT FindKey(char **SP) { return LookUpKey(GetKey(SP)); }
 
-/*
- * Data and setup stuff for the disassembler processing.
- */
+char *SpaceOver(char *S) {
+   for (; *S == ' ' || *S == '\t'; S++);
+   return S;
+}
 
-/* Data on coprocessor groups */
-
-unsigned int fpgrouptab[] = {0xd9e8, 0xd9f0, 0xd9f8};
+// Data and setup stuff for the disassembler processing.
+// Data on coprocessor groups.
+unsigned FpGroupTab[] = { 0xd9e8, 0xd9f0, 0xd9f8 };
 
 #define NGROUPS     9
+#define GROUP(G)    (0x100 + 010*((G) - 1))
+#define COPR(O)     (0x100 + 010*NGROUPS + 0x10*(O))
+#define FPGROUP(G)  (0x100 + 010*(NGROUPS + 0x10 + (G)))
+#define SPARSE_BASE (0x100 + 010*(NGROUPS + 0x10 + Members(FpGroupTab)))
 
-#define GROUP(i)    (256 + 8 * ((i) - 1))
-#define COPR(i)     (256 + 8 * NGROUPS + 16 * (i))
-#define FPGROUP(i)  (256 + 8 * NGROUPS + 16 * 8 + 8 * (i))
-#define SPARSE_BASE (256 + 8 * NGROUPS + 16 * 8 + 8 * NUMBER(fpgrouptab))
-
-/* #define OPILLEGAL 0 */
+#if 0
+#   define OPILLEGAL 0
+#endif
 #define OPTWOBYTE   2
 #define OPGROUP     4
 #define OPCOPR      6
 #define OPFPGROUP   8
 #define OPPREFIX    10
 #define OPSIMPLE    12
-#define OPTYPES     12  /* op types start here (includes simple ops) */
-
-#define PRESEG      1   /* these should be the same as in Debug.asm */
+#define OPTYPES     12 // Op types start here (includes simple ops).
+#define PRESEG      1 // These should be the same as in Debug.asm.
 #define PREREP      2
 #define PREREPZ     4
 #define PRELOCK     8
 #define PRE32D      0x10
 #define PRE32A      0x20
 
-/*
- * For sparsely filled parts of the opcode map, we have counterparts
- * to the above, which are compressed in a simple way.
- */
-
-/* Sparse coprocessor groups */
-
-unsigned int sp_fpgrouptab[] = {
-	0xd9d0, 0xd9e0, 0xdae8, 0xdbe0, 0xded8, 0xdfe0 };
+// For sparsely filled parts of the opcode map, we have counterparts to the above, which are compressed in a simple way.
+// Sparse coprocessor groups.
+unsigned SpFpGroupTab[] = { 0xd9d0, 0xd9e0, 0xdae8, 0xdbe0, 0xded8, 0xdfe0 };
 
 #define NSGROUPS 5
+#define SGROUP(G)	(SPARSE_BASE + 0x100 + 010*((G) - 1))
+#define SFPGROUP(G)	(SPARSE_BASE + 0x100 + 010*(NSGROUPS + (G)))
+#define NOPS		(SPARSE_BASE + 0x100 + 010*(NSGROUPS + Members(SpFpGroupTab)))
 
-#define SGROUP(i)	(SPARSE_BASE + 256 + 8 * ((i) - 1))
-#define SFPGROUP(i)	(SPARSE_BASE + 256 + 8 * NSGROUPS + 8 * (i))
-#define NOPS		(SPARSE_BASE + 256 + 8 * NSGROUPS + 8 * NUMBER(sp_fpgrouptab))
+int OpType[NOPS], OpInfo[NOPS];
+unsigned char OpCPU[NOPS];
 
-int optype[NOPS];
-int opinfo[NOPS];
-unsigned char opmach[NOPS];
+// (Sequence, Group) number pair.
+typedef struct GroupT { int Seq, Info; } *GroupT;
 
-/*
- * Here are the tables for the main processor groups.
- */
-
-struct {
-	int seq;	/* sequence number of the group */
-	int info;	/* which group number it is */
-} grouptab[]= {
-	{ 0x80, GROUP(1) }, /* Intel group 1 */
-	{ 0x81, GROUP(1) },
-	{ 0x83, GROUP(2) },
-	{ 0xd0, GROUP(3) }, /* Intel group 2 */
-	{ 0xd1, GROUP(3) },
-	{ 0xd2, GROUP(4) },
-	{ 0xd3, GROUP(4) },
-	{ 0xc0, GROUP(5) }, /* Intel group 2a */
-	{ 0xc1, GROUP(5) },
-	{ 0xf6, GROUP(6) }, /* Intel group 3 */
-	{ 0xf7, GROUP(6) },
-	{ 0xff, GROUP(7) }, /* Intel group 5 */
-	{ SPARSE_BASE + 0x00, GROUP(8) }, /* Intel group 6 */
-	{ SPARSE_BASE + 0x01, GROUP(9) }  /* Intel group 7 */
+// Here are the tables for the main processor groups.
+struct GroupT GroupTab[] = {
+// Intel group 1.
+   { 0x80, GROUP(1) }, { 0x81, GROUP(1) }, { 0x83, GROUP(2) },
+// Intel group 2.
+   { 0xd0, GROUP(3) }, { 0xd1, GROUP(3) }, { 0xd2, GROUP(4) }, { 0xd3, GROUP(4) },
+// Intel group 2a.
+   { 0xc0, GROUP(5) }, { 0xc1, GROUP(5) },
+// Intel group 3.
+   { 0xf6, GROUP(6) }, { 0xf7, GROUP(6) },
+// Intel group 5.
+   { 0xff, GROUP(7) },
+// Intel group 6.
+   { SPARSE_BASE + 0x00, GROUP(8) },
+// Intel group 7.
+   { SPARSE_BASE + 0x01, GROUP(9) }
 };
 
-/* #define NGROUPS 9 (this was done above) */
-
-struct { /* sparse groups */
-	int seq; /* sequence number of the group */
-	int info; /* which group number it is */
-} sp_grouptab[] = {
-	{ 0xfe, SGROUP(1) }, /* Intel group 4 */
-	{ SPARSE_BASE+0xba, SGROUP(2) }, /* Intel group 8 */
-	{ SPARSE_BASE+0xc7, SGROUP(3) }, /* Intel group 9 */
-	{ 0x8f, SGROUP(4) }, /* Not an Intel group */
-	{ 0xc6, SGROUP(5) }, /* Not an Intel group */
-	{ 0xc7, SGROUP(5) }
+// Sparse groups.
+struct GroupT SpGroupTab[] = {
+// Intel group 4.
+   { 0xfe, SGROUP(1) },
+// Intel group 8.
+   { SPARSE_BASE + 0xba, SGROUP(2) },
+// Intel group 9.
+   { SPARSE_BASE + 0xc7, SGROUP(3) },
+// Not an Intel group.
+   { 0x8f, SGROUP(4) },
+// Not an Intel group.
+   { 0xc6, SGROUP(5) }, { 0xc7, SGROUP(5) }
 };
 
-/* #define NSGROUPS 5 (this was done above) */
-
-/* strings to put into comment fields */
-
-struct inforec {
-	int seqno;
-	char *string;
-} tblcomments[] = {
-	{ 0, "main opcode part" },
-	{ GROUP(1), "Intel group 1" },
-	{ GROUP(3), "Intel group 2" },
-	{ GROUP(5), "Intel group 2a" },
-	{ GROUP(6), "Intel group 3" },
-	{ GROUP(7), "Intel group 5" },
-	{ GROUP(8), "Intel group 6" },
-	{ GROUP(9), "Intel group 7" },
-	{ COPR(0), "Coprocessor d8" },
-	{ COPR(1), "Coprocessor d9" },
-	{ COPR(2), "Coprocessor da" },
-	{ COPR(3), "Coprocessor db" },
-	{ COPR(4), "Coprocessor dc" },
-	{ COPR(5), "Coprocessor dd" },
-	{ COPR(6), "Coprocessor de" },
-	{ COPR(7), "Coprocessor df" },
-	{ FPGROUP(0), "Coprocessor groups" },
-	{ -1, NULL }
-};
-
-char *spectab[] = { "WAIT", "ORG", "DD", "DW", "DB" };
-char *spectab2[] = { "LOCKREP", "SEG" };
-
-/*
- * terminate program with error msg.
- */
-
-volatile void fail( const char *message, ... )
-{
-	va_list args;
-
-	va_start( args, message );
-	vfprintf( stderr, message, args );
-	va_end( args );
-	putc( '\n', stderr );
-	exit( 1 );
+// Add an entry to the disassembler lookup table.
+void AddDas(int Op, int Type, int Info) {
+   if (OpType[Op] != 0) Error("Duplicate information for index %d", Op);
+   OpType[Op] = Type, OpInfo[Op] = Info;
 }
 
-FILE * openread( const char *path )
-{
-	FILE *f;
-
-	f = fopen( path, "r" );
-	if ( f == NULL ) {
-	    perror( path );
-	    exit( 1 );
-	}
-	filename = path;
-	lineno = 0;
-	return f;
+// Get a hex nybble from the input line or fail.
+int GetHex(char Ch) {
+   if (!isxdigit(Ch)) { Error("Hex digit expected instead of `%c'", Ch); return -1; }
+   else if (isdigit(Ch)) return Ch - '0';
+   else if (islower(Ch)) return Ch - 'a' + 10;
+   else return Ch - 'A' + 10;
 }
 
-volatile void linenofail( const char *message, ... )
-{
-	va_list args;
-
-	fprintf( stderr, "Line %d of `%s':  ", lineno, filename );
-	va_start( args, message );
-	vfprintf( stderr, message, args );
-	va_end( args );
-	putc( '\n', stderr );
-	exit( 1 );
+// Get a hex byte from the input line and update the pointer accordingly.
+int GetByte(char **SP) {
+   char *S = *SP;
+   int H0 = GetHex(*S++), H1 = GetHex(*S++);
+   *SP = S;
+   return H0 << 4 | H1;
 }
 
-void * xmalloc( unsigned int len, const char *why )
-{
-	void *ptr = malloc( len );
-
-	if ( ptr == NULL ) fail( "Cannot allocate %u bytes for %s", len, why );
-	return ptr;
+// Get a `/r' descriptor from the input line and update the pointer accordingly.
+int GetR(char **SP) {
+   char *S = *SP;
+   if (*S != '/') Error("`/' expected");
+   S++;
+   if (*S < '0' || *S > '7') Error("Octal digit expected");
+   int R = *S++ - '0';
+   *SP = S;
+   return R;
 }
 
-/*
- * read a line from input file, skip comments and blank lines.
- */
-
-Boolean GetLine( FILE *ff )
-{
-	int n;
-
-	for ( ;; ) {
-		if ( fgets( line, LINELEN, ff ) == NULL ) return False;
-		++lineno;
-		if ( line[0] == '#' ) continue;
-		n = strlen( line ) - 1;
-		if ( n < 0 || line[n] != '\n' )
-			linenofail( "too long." );
-		if ( n > 0 && line[n-1] == '\r' ) --n;
-		if ( n == 0 ) continue;
-		line[n] = '\0';
-		return True;
-	}
-}
-
-short getkey( char **pp )
-{
-	short key;
-	char *p = *pp;
-
-	if (*p == ' ' || *p == '\t' || *p == ';' || *p == '\0')
-	    linenofail("key expected");
-	key = *p++;
-	if (*p != ' ' && *p != '\t' && *p != ';' && *p != '\0') {
-	    key = (key << 8) | *p++;
-	    if (*p != ' ' && *p != '\t' && *p != ';' && *p != '\0')
-		linenofail("key too long");
-	}
-	*pp = p;
-	return key;
-}
-
-/*
- * Mark the given key pointer as small, as well as anything smaller than
- * it (according to Op.ord).
- */
-
-void marksmall( struct keytab *kp )
-{
-	int i;
-
-	ordsmall[kp - olkeydict] = True;
-	for ( i = 0; i < n_ords; ++i )
-		if ( keyord2[i] == kp )
-			marksmall( keyord1[i] );
-}
-
-/*
- * Add a byte to the assembler table (asmtab).
- * The format of this table is described in a long comment in Debug.asm,
- * somewhere within the mini-assembler.
- */
-
-void add_to_asmtab( unsigned char byte )
-{
-	if ( n_asm_tab >= MAX_ASM_TAB )
-		linenofail( "Assembler table overflow." );
-	asmtab[n_asm_tab++] = byte;
-}
-
-
-unsigned char getmachine( char **pp )
-{
-	char *p = *pp;
-	unsigned char value;
-
-	if ( *p != ';' ) return 0;
-	++p;
-	if ( *p < '0' || *p > '6' )
-		linenofail( "bad machine type" );
-	value = *p++ - '0';
-	add_to_asmtab( (unsigned char)(ASM_MACH0 + value) );
-	*pp = p;
-	return value;
-}
-
-struct keytab * lookupkey( short key )
-{
-	struct keytab *kp;
-
-	for ( kp = olkeydict; kp < olkeydict + NUMBER(olkeydict); ++kp )
-		if ( key == kp->key )
-			return kp;
-	linenofail( "can't find key %X", key );
-	return NULL;
-}
-
-char * skipwhite( char *p )
-{
-	while ( *p == ' ' || *p == '\t' ) ++p;
-	return p;
-}
-
-/*
- * Creates an entry in the disassembler lookup table.
- */
-
-void entertable( int i, int type, int info )
-{
-	if ( optype[i] != 0 )
-		linenofail( "Duplicate information for index %d", i );
-	optype[i] = type;
-	opinfo[i] = info;
-}
-
-/*
- * Get a hex nybble from the input line or fail.
- */
-
-int getnybble( char c )
-{
-	if ( c >= '0' && c <= '9' ) return c - '0';
-	if ( c >= 'a' && c <= 'f' ) return c - 'a' + 10;
-	linenofail( "Hex digit expected instead of `%c'", c );
-	return -1;
-}
-
-/*
- * Get a hex byte from the input line and update the pointer accordingly.
- */
-
-int getbyte( char **pp )
-{
-	char *p = *pp;
-	int answer;
-
-	answer = getnybble( *p++ );
-	answer = (answer << 4) | getnybble( *p++ );
-	*pp = p;
-	return answer;
-}
-
-/*
- * Get a `/r' descriptor from the input line and update the pointer
- * accordingly.
- */
-
-int getslash( char **pp )
-{
-	char *p = *pp;
-	int answer;
-
-	if ( *p != '/' ) linenofail( "`/' expected" );
-	++p;
-	if ( *p < '0' || *p > '7' ) linenofail( "Octal digit expected" );
-	answer = *p - '0';
-	++p;
-	*pp = p;
-	return answer;
-}
-
-/*
- * enter item into mnlist[].
- */
-
-int entermn(char *str, char *str_end)
-{
-	char *p;
-
-	if ( num_mnrecs >= MAX_MNRECS )
-		linenofail( "Too many mnemonics" );
-
-	if ( *str == '+' ) {
-		if ( n_saved_mnems >= MAX_SAVED_MNEMS )
-			linenofail( "Too many mnemonics to save" );
-		saved_mnem[n_saved_mnems++] = num_mnrecs;
-		++str;
-	}
-
-	p = xmalloc( str_end - str + 1, "mnemonic name" );
-	mnlist[num_mnrecs].string = p;
-	mnlist[num_mnrecs].len = str_end - str;
+// Add an item to OpList[].
+int GetOp(char *S, char *EndS) {
+   if (Ops >= OpMax) Error("Too many mnemonics");
+   if (*S == '+') {
+      if (Saveds >= SavedMax) Error("Too many mnemonics to save");
+      SavedTab[Saveds++] = Ops, S++;
+   }
+   size_t Len = EndS - S;
+   char *Id = Allocate(Len + 1, "mnemonic name");
+   OpList[Ops].Id = Id, OpList[Ops].Len = Len;
 #if 1
-	while ( str < str_end ) *p++ = toupper( *str++ );
-	*p = 0;
+   for (; S < EndS; S++) *Id++ = toupper(*S);
+   *Id = '\0';
 #else
-	memcpy( p, str, str_end - str );
-	*(p+(str_end - str)) = 0;
-	_strupr( p );
+   memcpy(Id, S, Len), Id[Len] = '\0', _strupr(Id);
 #endif
-	mnlist[num_mnrecs].asmoffset = n_asm_tab;
-	return num_mnrecs++;
+   OpList[Ops].AsmOffset = Asms;
+   return Ops++;
 }
 
-/*
- * Merge sort the indicated range of mnemonic records.
- */
-#if SORTMN
-struct mnrec * mn_sort(struct mnrec *start, int len)
-{
-	struct mnrec *p1, *p2, *answer;
-	struct mnrec **headpp;
-	int i;
-
-	i = len / 2;
-	if (i == 0)
-		return start;
-
-	p1 = mn_sort(start, i);
-	p2 = mn_sort(start + i, len - i);
-	headpp = &answer;
-	for ( ;; ) {
-		if ( strcmp(p1->string, p2->string) < 0 ) {
-			*headpp = p1;
-			headpp = &p1->next;
-			p1 = *headpp;
-			if ( p1 == NULL ) {
-				*headpp = p2;
-				break;
-			}
-		} else {
-			*headpp = p2;
-			headpp = &p2->next;
-			p2 = *headpp;
-			if ( p2 == NULL ) {
-				*headpp = p1;
-				break;
-			}
-		}
-	}
-	return answer;
-}
-#endif
-
-/*
- * This reads the main file, "Op.set".
- */
-
-void read_is( FILE *f1 )
-{
-	int i;
-
-	entertable( 0x0f, OPTWOBYTE, SPARSE_BASE );
-	entertable( 0x26, OPPREFIX, PRESEG | (0 << 8) ); /* seg es */
-	entertable( 0x2e, OPPREFIX, PRESEG | (1 << 8) ); /* seg cs */
-	entertable( 0x36, OPPREFIX, PRESEG | (2 << 8) ); /* seg ss */
-	entertable( 0x3e, OPPREFIX, PRESEG | (3 << 8) ); /* seg ds */
-	entertable( 0x64, OPPREFIX, PRESEG | (4 << 8) ); /* seg fs */
-	entertable( 0x65, OPPREFIX, PRESEG | (5 << 8) ); /* seg gs */
-	entertable( 0xf2, OPPREFIX, PREREP ); /* other prefixes */
-	entertable( 0xf3, OPPREFIX, PREREP | PREREPZ );
-	entertable( 0xf0, OPPREFIX, PRELOCK );
-	entertable( 0x66, OPPREFIX, PRE32D );
-	entertable( 0x67, OPPREFIX, PRE32A );
-	opmach[0x64] = opmach[0x65] = opmach[0x66] = opmach[0x67] = 3;
-
-	for ( i = 0; i < NUMBER(grouptab); ++i )
-		entertable(grouptab[i].seq, OPGROUP, grouptab[i].info);
-	for ( i = 0; i < NUMBER(sp_grouptab); ++i )
-		entertable(sp_grouptab[i].seq, OPGROUP, sp_grouptab[i].info);
-	for ( i = 0; i < 8; ++i )
-		entertable(0xd8 + i, OPCOPR, COPR(i));
-	for ( i = 0; i < NUMBER(fpgrouptab); ++i ) {
-		unsigned int j = fpgrouptab[i];
-		unsigned int k = (j >> 8) - 0xd8;
-
-		if ( k > 8 || (j & 0xff) < 0xc0 )
-			fail( "Bad value for fpgrouptab[%d]", i );
-		entertable( COPR(k) + 8 + (((j & 0xff) - 0xc0) >> 3 ),
-				OPFPGROUP, FPGROUP(i));
-	}
-	for ( i = 0; i < NUMBER(sp_fpgrouptab); ++i ) {
-		unsigned int j = sp_fpgrouptab[i];
-		unsigned int k = (j >> 8) - 0xd8;
-
-		if ( k > 8 || ( j & 0xff ) < 0xc0 )
-			fail( "Bad value for sp_fpgrouptab[%d]", i );
-		entertable( COPR(k) + 8 + (((j & 0xff) - 0xc0) >> 3 ),
-				OPFPGROUP, SFPGROUP(i));
-	}
-
-	/* loop over lines in the file */
-
-	while ( GetLine( f1 ) ) {
-		int mnem;
-		int mn_alt;
-		char *p, *p0, *pslash, *phash, *pstar;
-		Boolean asm_only_line;
-		unsigned char atab_addendum;
-
-		asm_only_line = False;
-		p0 = line;
-		if ( line[0] == '_' ) {
-			asm_only_line = True;
-			++p0;
-		}
-		atab_addendum = '\0';
-		if ( *p0 == '^' ) {
-			static const unsigned char uptab[] =
-			{ASM_AAX, ASM_DB, ASM_DW,
-			ASM_DD, ASM_ORG, ASM_D32};
-
-			++p0;
-			atab_addendum = uptab[*p0++ - '0'];
-		}
-		p = strchr( p0, ' ' );
-		if ( p == NULL ) p = p0 + strlen( p0 );
-
-		/* check for '/', '#' and '*' separators */
-
-		pslash = memchr( p0, '/', p - p0 );
-		phash = memchr( p0, '#', p - p0 );
-		pstar = memchr( p0, '*', p - p0 );
-		if ( pslash != NULL ) {
-			mnem = entermn( p0, pslash );
-			add_to_asmtab( ASM_D16 );
-			//++mnlist[mnem].asmoffset;	/* this one isn't 32 bit */
-			++pslash;
-			mn_alt = entermn( pslash, p );
-			add_to_asmtab( ASM_D32 );
-		} else if ( phash != NULL ) {
-			mnem = entermn( p0, phash );
-			add_to_asmtab( ASM_D16 );
-			//++mnlist[mnem].asmoffset;	/* this one isn't 32 bit */
-			++phash;
-			mn_alt = entermn( phash, p );
-			add_to_asmtab( ASM_D32 );
-		} else if ( pstar != NULL ) {
-			mn_alt = entermn( p0, pstar );	/* note the reversal */
-			add_to_asmtab( ASM_WAIT );
-			++pstar;
-			mnem = entermn( pstar, p );
-		} else {
-			mnem = entermn( p0, p );
-		}
-
-		if ( atab_addendum != '\0' ) add_to_asmtab( atab_addendum );
-
-		atab_addendum = ASM_END;
-		memset( ordsmall, 0, n_keys * sizeof(Boolean) );
-
-		/* loop over instruction variants */
-
-		while ( *p == ' ' ) {
-			Boolean lockable;
-			Boolean asm_only;
-			Boolean dis_only;
-			unsigned char	machine;
-			unsigned long	atab_inf;
-			unsigned short	atab_key;
-			unsigned char	atab_xtra = 0;
-
-			while ( *p == ' ' ) ++p;
-			asm_only = asm_only_line;
-			dis_only = False;
-			if ( *p == '_' ) { /* if assembler only */
-				++p;
-				asm_only = True;
-			}
-			else if ( *p == 'D' ) { /* if disassembler only */
-				++p;
-				dis_only = True;
-			}
-			lockable = False;
-			if ( *p == 'L' ) {
-				++p;
-				lockable = True;
-				if ( dis_only == False )
-					add_to_asmtab( ASM_LOCKABLE );
-			}
-			atab_inf = i = getbyte( &p );
-			if ( i == 0x0f ) {
-				i = getbyte( &p );
-				atab_inf = 256 + i;
-				i += SPARSE_BASE;
-			}
-			if ( optype[i] == OPGROUP ) {
-				int j = getslash( &p );
-				int k;
-
-				for ( k = 0;; ++k ) {
-					if ( k >= n_agroups ) {
-						if ( ++n_agroups > MAX_AGROUP_ENTRIES )
-							linenofail( "Too many agroup entries" );
-						agroup_i[k] = i;
-						agroup_inf[k] = atab_inf;
-						break;
-					}
-					if ( agroup_i[k] == i )
-						break;
-				}
-				atab_inf = 0x240 + 8 * k + j;
-				i = opinfo[i] + j;
-			}
-			if ( optype[i] == OPCOPR ) {
-				if ( *p == '/' ) {
-					int j = getslash( &p );
-
-					atab_inf = 0x200 + j * 8 + (i - 0xd8);
-					i = opinfo[i] + j;
-				} else {
-					atab_xtra = getbyte( &p );
-					if ( atab_xtra < 0xc0 )
-						linenofail( "Bad second escape byte" );
-					i = opinfo[i] + 8 + ((atab_xtra - 0xc0) >> 3);
-					if ( optype[i] == OPFPGROUP )
-						i = opinfo[i] + (atab_xtra & 7);
-				}
-			}
-			switch ( *p++ ) {
-			case '.':
-				machine = getmachine( &p );
-				if ( !asm_only ) {
-					entertable( i, OPSIMPLE, mnem );
-					opmach[i] = machine;
-				}
-				atab_key = 0;
-				/* none of these are lockable */
-				break;
-			case '*':	/* lock or rep... prefix */
-				add_to_asmtab( ASM_LOCKREP );
-				add_to_asmtab( (unsigned char)atab_inf );	/* special case */
-				atab_addendum = '\0';
-				break;
-			case '&':	/* segment prefix */
-				add_to_asmtab( ASM_SEG );
-				add_to_asmtab( (unsigned char)atab_inf );	/* special case */
-				atab_addendum = '\0';
-				break;
-			case ':': {
-				struct keytab *kp = lookupkey(getkey(&p));
-				int width = kp->width;
-				int j;
-
-				machine = getmachine(&p);
-				if ( dis_only )
-					; //atab_addendum = '\0';
-				else {
-					if ( ordsmall[kp - olkeydict] )
-						linenofail( "Variants out of order." );
-					marksmall( kp );
-				}
-				atab_key = kp->value + 1;
-				if ( ( i >= 256 && i < SPARSE_BASE )
-					|| i >= SPARSE_BASE + 256 ) {
-					if ( width > 2 )
-						linenofail( "width failure" );
-					width = 1;
-				}
-				if ( i & ( width - 1 ) )
-					linenofail( "width alignment failure" );
-				if ( !asm_only )
-					for ( j = ( i == 0x90 ); j < width; ++j ) {
-						/*      ^^^^^^^^^  kludge for NOP instr. */
-						entertable(i|j, oloffset[kp->value], mnem);
-						opmach[i | j] = machine;
-						if ( lockable ) {
-							if ( n_locktab >= MAX_LOCKTAB_ENTRIES )
-								linenofail("Too many lockable "
-										"instructions");
-							locktab[n_locktab] = i | j;
-							++n_locktab;
-						}
-					}
-			}
-			break;
-			default:
-				linenofail("Syntax error.");
-			}
-			if ( atab_addendum != '\0' && dis_only == False ) {
-				atab_inf = atab_inf * (unsigned short) (n_ol_types + 1)
-					+ atab_key;
-				add_to_asmtab( (unsigned char)(atab_inf >> 8) );
-				if ( ( atab_inf >> 8 ) >= ASM_MACH0 )
-					fail( "Assembler table is too busy" );
-				add_to_asmtab( (unsigned char)atab_inf );
-				if ( atab_xtra != 0 )
-					add_to_asmtab( atab_xtra );
-			}
-			if ( pslash != NULL ) {
-				if ( n_slash_entries >= MAX_SLASH_ENTRIES )
-					linenofail( "Too many slash entries" );
-				slashtab_seq[n_slash_entries] = i;
-				slashtab_mn[n_slash_entries] = mn_alt;
-				++n_slash_entries;
-			} else if ( phash != NULL ) {
-				if ( n_hash_entries >= MAX_HASH_ENTRIES )
-					linenofail( "Too many hash entries" );
-				hashtab_seq[n_hash_entries] = i;
-				hashtab_mn[n_hash_entries] = mn_alt;
-				++n_hash_entries;
-			} else if ( pstar != NULL ) {
-				if ( n_star_entries >= MAX_STAR_ENTRIES )
-					linenofail( "Too many star entries" );
-				startab_seq[n_star_entries] = i;
-				startab_mn[n_star_entries] = mn_alt;
-				++n_star_entries;
-			}
-		} //end while variants
-		if ( *p != '\0' )
-			linenofail( "Syntax error." );
-		if ( atab_addendum != '\0' ) {
-			add_to_asmtab( atab_addendum );	/* ASM_END, if applicable */
-		}
-	}
+// Merge-sort the indicated range of mnemonic records.
+OpT SortOp(OpT Tab, int N) {
+   if (!SortOps) return Tab;
+   int n = N/2; if (n == 0) return Tab;
+   OpT P0 = SortOp(Tab, n), P1 = SortOp(Tab + n, N - n);
+   OpT Op, *OpP = &Op;
+   while (true)
+      if (strcmp(P0->Id, P1->Id) < 0) {
+         *OpP = P0, OpP = &P0->Next, P0 = *OpP;
+         if (P0 == NULL) { *OpP = P1; break; }
+      } else {
+         *OpP = P1, OpP = &P1->Next, P1 = *OpP;
+         if (P1 == NULL) { *OpP = P0; break; }
+      }
+   return Op;
 }
 
-/* Print a labeled "dw" list; add a newline every 8 items. */
-
-void put_dw( FILE *f2, const char *label, int *datap, int n )
-{
-	const char *initstr;
-	int i;
-
-	fputs(label,f2);
-	while (n > 0) {
-		initstr = "\tdw ";
-		for (i = (n <= 8 ? n : 8); i > 0; --i) {
-			fputs(initstr, f2);
-			initstr = ",";
-			fprintf( f2, "0%xh", *datap++);
-		}
-		fputs("\n", f2);
-		n -= 8;
-	}
+// Read the main file, "Op.set".
+void GetOps(FILE *InF) {
+   AddDas(0017, OPTWOBYTE, SPARSE_BASE);
+   AddDas(0046, OPPREFIX, PRESEG | (0 << 8)); // ES:
+   AddDas(0056, OPPREFIX, PRESEG | (1 << 8)); // CS:
+   AddDas(0066, OPPREFIX, PRESEG | (2 << 8)); // SS:
+   AddDas(0076, OPPREFIX, PRESEG | (3 << 8)); // DS:
+   AddDas(0144, OPPREFIX, PRESEG | (4 << 8)); // FS:
+   AddDas(0145, OPPREFIX, PRESEG | (5 << 8)); // GS:
+   AddDas(0362, OPPREFIX, PREREP); // repne/repnz
+   AddDas(0363, OPPREFIX, PREREP | PREREPZ); // repe/repz/rep
+   AddDas(0360, OPPREFIX, PRELOCK); // lock:
+   AddDas(0146, OPPREFIX, PRE32D); // D32:
+   AddDas(0147, OPPREFIX, PRE32A); // A32:
+   OpCPU[0144] = OpCPU[0145] = OpCPU[0146] = OpCPU[0147] = 3;
+   for (int G = 0; G < Members(GroupTab); G++) AddDas(GroupTab[G].Seq, OPGROUP, GroupTab[G].Info);
+   for (int S = 0; S < Members(SpGroupTab); S++) AddDas(SpGroupTab[S].Seq, OPGROUP, SpGroupTab[S].Info);
+   for (int I = 0; I < 8; I++) AddDas(0xd8 + I, OPCOPR, COPR(I));
+   for (int F = 0; F < Members(FpGroupTab); F++) {
+      unsigned J = FpGroupTab[F], K = (J >> 8) - 0xd8;
+      if (K > 010 || (J&0xff) < 0xc0) Fatal("Bad value for FpGroupTab[%d]", F);
+      AddDas(COPR(K) + 010 + (((J&0xff) - 0xc0) >> 3), OPFPGROUP, FPGROUP(F));
+   }
+   for (int S = 0; S < Members(SpFpGroupTab); S++) {
+      unsigned J = SpFpGroupTab[S], K = (J >> 8) - 0xd8;
+      if (K > 010 || (J&0xff) < 0xc0) Fatal("Bad value for SpFpGroupTab[%d]", S);
+      AddDas(COPR(K) + 010 + (((J&0xff) - 0xc0) >> 3), OPFPGROUP, SFPGROUP(S));
+   }
+   while (GetLine(InF)) { // Loop through the lines in the file.
+      char *S = LineBuf;
+      bool AsmOnlyLine = false; if (*S == '_') AsmOnlyLine = true, S++;
+      unsigned char OpSuffix = '\0';
+      if (*S == '^') {
+         static const unsigned char UpTab[] = { AaxA, DbA, DwA, DdA, OrgA, D32A };
+         S++, OpSuffix = UpTab[*S++ - '0'];
+      }
+      char *S1 = strchr(S, ' '); if (S1 == NULL) S1 = S + strlen(S);
+   // Check for '/', '#' and '*' separators.
+      char *SlashP = memchr(S, '/', S1 - S), *HashP = memchr(S, '#', S1 - S), *StarP = memchr(S, '*', S1 - S);
+      int Op0, Op1;
+      if (SlashP != NULL) {
+         Op0 = GetOp(S, SlashP), AddAsm(D16A);
+#if 0
+         OpList[Op0].AsmOffset++; // This one isn't 32-bit.
+#endif
+         SlashP++, Op1 = GetOp(SlashP, S1), AddAsm(D32A);
+      } else if (HashP != NULL) {
+         Op0 = GetOp(S, HashP), AddAsm(D16A);
+#if 0
+         OpList[Op0].AsmOffset++; // This one isn't 32-bit.
+#endif
+         HashP++, Op1 = GetOp(HashP, S1), AddAsm(D32A);
+      } else if (StarP != NULL)
+      // Note the reversal.
+         Op1 = GetOp(S, StarP), AddAsm(WaitA), StarP++, Op0 = GetOp(StarP, S1);
+      else
+         Op0 = GetOp(S, S1);
+      if (OpSuffix != '\0') AddAsm((AsmOp)OpSuffix);
+      OpSuffix = EndA;
+      memset(IsSmall, 0, KeyN*sizeof *IsSmall);
+      while (*S1 == ' ') { // Loop through the instruction variants.
+         for (; *S1 == ' '; S1++);
+         bool AsmOnly = AsmOnlyLine || *S1 == '_', DisOnly = *S1 == 'D';
+         if (*S1 == '_' || *S1 == 'D') S1++;
+         bool Lockable = *S1 == 'L';
+         if (*S1 == 'L') {
+            S1++;
+            if (!DisOnly) AddAsm(LockableA);
+         }
+         unsigned long OpInf = GetByte(&S1);
+         int OpX = OpInf;
+         if (OpX == 0x0f) OpX = GetByte(&S1), OpInf = 0x100 + OpX, OpX += SPARSE_BASE;
+         if (OpType[OpX] == OPGROUP) {
+            int R = GetR(&S1), G = 0;
+            for (; ; G++) {
+               if (G >= AGroups) {
+                  if (++AGroups > AGroupMax) Error("Too many agroup entries");
+                  AGroupI[G] = OpX, AGroupInf[G] = OpInf;
+                  break;
+               }
+               if (AGroupI[G] == OpX) break;
+            }
+            OpInf = 0x240 + 010*G + R, OpX = OpInfo[OpX] + R;
+         }
+         unsigned char OpExtra = 0;
+         if (OpType[OpX] == OPCOPR) {
+            if (*S1 == '/') {
+               int R = GetR(&S1);
+               OpInf = 0x200 + 010*R + (OpX - 0xd8), OpX = OpInfo[OpX] + R;
+            } else {
+               OpExtra = GetByte(&S1); if (OpExtra < 0xc0) Error("Bad second escape byte");
+               OpX = OpInfo[OpX] + 010 + ((OpExtra - 0xc0) >> 3);
+               if (OpType[OpX] == OPFPGROUP) OpX = OpInfo[OpX] + (OpExtra&7);
+            }
+         }
+         unsigned short OpKey;
+         switch (*S1++) {
+         // None of these are lockable.
+            case '.': {
+               unsigned char CPU = GetCPU(&S1);
+               if (!AsmOnly) AddDas(OpX, OPSIMPLE, Op0), OpCPU[OpX] = CPU;
+               OpKey = 0;
+            }
+            break;
+         // Lock or rep... prefix, including OpInf as a special case.
+            case '*': AddAsm(LockRepA), AddAsm((AsmOp)(OpInf&0xff)), OpSuffix = '\0'; break;
+         // Segment prefix, including OpInf as a special case.
+            case '&': AddAsm(SegA), AddAsm((AsmOp)(OpInf&0xff)), OpSuffix = '\0'; break;
+            case ':': {
+               KeyT K = FindKey(&S1);
+               int Width = K->Width;
+               unsigned char CPU = GetCPU(&S1);
+               if (DisOnly)/* OpSuffix = '\0'*/;
+               else {
+                  if (IsSmall[K - KeyDict]) Error("Variants out of order.");
+                  MarkSmall(K);
+               }
+               OpKey = K->Value + 1;
+               if (OpX >= 0x100 && OpX < SPARSE_BASE || OpX >= SPARSE_BASE + 0x100) {
+                  if (Width > 2) Error("width failure");
+                  Width = 1;
+               }
+               if (OpX&(Width - 1)) Error("width alignment failure");
+               if (!AsmOnly) for (int J = (OpX == 0x90)/* A kludge for the NOP instruction. */; J < Width; J++) {
+                  AddDas(OpX | J, OffsetTab[K->Value], Op0), OpCPU[OpX | J] = CPU;
+                  if (Lockable) {
+                     if (Locks >= LockMax) Error("Too many lockable instructions");
+                     LockTab[Locks++] = OpX | J;
+                  }
+               }
+            }
+            break;
+            default: Error("Syntax error.");
+         }
+         if (OpSuffix != '\0' && !DisOnly) {
+            OpInf = OpInf*(unsigned short)(Keys + 1) + OpKey;
+            AddAsm((AsmOp)(OpInf >> 8));
+            if ((OpInf >> 8) >= Mach0A) Fatal("Assembler table is too busy");
+            AddAsm((AsmOp)(OpInf&0xff));
+            if (OpExtra != 0) AddAsm((AsmOp)OpExtra);
+         }
+         if (SlashP != NULL) {
+            if (Slashes >= SlashMax) Error("Too many slash entries");
+            SlashSeq[Slashes] = OpX, SlashOp[Slashes] = Op1, Slashes++;
+         } else if (HashP != NULL) {
+            if (Hashes >= HashMax) Error("Too many hash entries");
+            HashSeq[Hashes] = OpX, HashOp[Hashes] = Op1, Hashes++;
+         } else if (StarP != NULL) {
+            if (Stars >= StarMax) Error("Too many star entries");
+            StarSeq[Stars] = OpX, StarOp[Stars] = Op1, Stars++;
+         }
+      }
+      if (*S1 != '\0') Error("Syntax error.");
+      if (OpSuffix != '\0') AddAsm((AsmOp)OpSuffix); // EndA, if applicable.
+   }
 }
 
-/*
- * Print everything onto the file.
- */
+// Strings to put into the comment fields.
+struct InfoRec {
+   int Seq; char *Id;
+} CommentTab[] = {
+   { 0, "main opcode part" },
+   { GROUP(1), "Intel group 1" },
+   { GROUP(3), "Intel group 2" },
+   { GROUP(5), "Intel group 2a" },
+   { GROUP(6), "Intel group 3" },
+   { GROUP(7), "Intel group 5" },
+   { GROUP(8), "Intel group 6" },
+   { GROUP(9), "Intel group 7" },
+   { COPR(0), "Coprocessor d8" },
+   { COPR(1), "Coprocessor d9" },
+   { COPR(2), "Coprocessor da" },
+   { COPR(3), "Coprocessor db" },
+   { COPR(4), "Coprocessor dc" },
+   { COPR(5), "Coprocessor dd" },
+   { COPR(6), "Coprocessor de" },
+   { COPR(7), "Coprocessor df" },
+   { FPGROUP(0), "Coprocessor groups" },
+   { -1, NULL }
+};
 
-void dumptables(FILE *f2)
-{
-	int offset;
-	struct mnrec *mnp;
-	int colsleft;
-	char *auxstr;
-	struct inforec *tblptr;
-	int i;
-	int j;
-	unsigned int k;
-	unsigned int l;
-	char *pmne;
-
-	if ( num_mnrecs == 0 )
-		fail( "No assembler mnemonics!" );
-
-#if SORTMN
-	/* Sort the mnemonics alphabetically. */
-	mnhead = mn_sort(mnlist, num_mnrecs);
-#else
-	mnhead = mnlist;
-	for ( i = 0; i < num_mnrecs; i++ )
-		mnlist[i].next = &mnlist[i+1];
-	mnlist[num_mnrecs-1].next = NULL;
-#endif
-
-	fprintf( f2, "\n;--- This file was generated by MakeTabs.exe.\n" );
-
-	/* Print out oplists[] */
-
-	fputs( "\n;--- Operand type lists.\n"
-		";--- They were read from file Op.key.\n\n"
-		"oplists label byte\n\topl\t;void - for instructions without operands\n", f2 );
-	for ( i = 0; i < n_ol_types; ++i ) {
-#if 0
-		unsigned char szKey[4];
-		if ( olkeydict[i].key > 0xFF ) {
-			szKey[0] = (unsigned char)(olkeydict[i].key >> 8);
-			szKey[1] = (unsigned char)(olkeydict[i].key & 0xFF);
-			szKey[2] = '\0';
-		} else {
-			szKey[0] = (unsigned char)(olkeydict[i].key);
-			szKey[1] = '\0';
-		}
-		fprintf( f2, "\topl %s, %s\t; ofs=%Xh\n", szKey, olnames[i], oloffset[i] );
-#else
-		fprintf( f2, "\topl %s\t; idx=%u, ofs=%Xh\n", olnames[i], i+1, oloffset[i] );
-#endif
-	}
-
-#if 0
-	fprintf( f2, "\nOPLIST_27\tEQU 0%Xh\t; this is the OP_IMM8 key\n",
-			oloffset[lookupkey('27')->value] );
-	fprintf( f2, "OPLIST_41\tEQU 0%Xh\t; this is the OP_ES key\n",
-			oloffset[lookupkey('41')->value] );
-#endif
-
-//	fprintf( f2, "\nASMMOD\tEQU %u\n", n_ol_types+1 );
-	fprintf( f2, "\nASMMOD\tEQU opidx\n" );
-
-	/* Dump out agroup_inf. */
-
-	fputs( "\n;--- Assembler: data on groups.\n"
-		";--- If HiByte == 01, it's a \"0F-prefix\" group.\n\n"
-		"agroups label word\n", f2);
-	for ( i = 0; i < n_agroups; ++i ) {
-		fprintf( f2, "\tdw %03Xh\t;%u\n", agroup_inf[i], i );
-	}
-
-	/* Dump out asmtab. */
-
-	fputs( "\n;--- List of assembler mnemonics and data.\n"
-		";--- variant's 1. argument (=a):\n"
-		";---   if a < 0x100: one byte opcode.\n"
-		";---   if a >= 0x100 && a < 0x200: two byte \"0F\"-opcode.\n"
-		";---   if a >= 0x200 && a < 0x240: fp instruction.\n"
-		";---   if a >= 0x240: refers to agroups [macro AGRP() is used].\n"
-		";--- variant's 2. argument is index into array opindex.\n\n"
-		"mnlist label byte\n", f2 );
-	for ( mnp = mnhead, offset = 0; mnp != NULL; mnp = mnp->next ) {
-		mnp->offset = offset + 2;
-		offset += mnp->len + 2;
-		fprintf( f2, "\tmne %s", mnp->string );
-
-		i = mnp->asmoffset;
-
-		if ( asmtab[i] == ASM_D16 && asmtab[i+1] == ASM_D32 ) {
-			//fprintf( f2, ", ASM_D16\t; ofs=%04x\n", i );
-			fprintf( f2, ", ASM_D16\t; ofs=%Xh\n", i );
-		} else if ( asmtab[i] >= ASM_WAIT ) {
-			fprintf( f2, ", ASM_%s\t; ofs=%Xh\n", spectab[asmtab[i] - ASM_WAIT], i );
-		} else if ( ( asmtab[i] == ASM_SEG || asmtab[i] == ASM_LOCKREP ) ) {
-			fprintf( f2, ", ASM_%s, %03xh\t; ofs=%Xh\n", spectab2[asmtab[i] - ASM_LOCKREP], asmtab[i+1], i );
-		} else {
-			j = i;
-			while ( asmtab[j] > ASM_SEG && asmtab[j] < ASM_WAIT ) {
-				switch ( asmtab[j] ) {
-				case ASM_AAX:
-					fprintf( f2, ", ASM_AAX" );
-					break;
-				case ASM_D16:
-					fprintf( f2, ", ASM_D16" );
-					break;
-				case ASM_D32:
-					fprintf( f2, ", ASM_D32" );
-					break;
-				}
-				j++;
-			}
-			fprintf( f2, "\t; ofs=%Xh\n", i );
-
-			for ( ; j < n_asm_tab; ) {
-				char *lockstr = "";
-				char machstr[12] = {""};
-				if ( asmtab[j] == 0xFF )
-					break;
-
-				if ( asmtab[j] == ASM_LOCKABLE ) {
-					lockstr = "ASM_LOCKABLE";
-					j++;
-				}
-				/* there's a problem with DEC and INC! */
-				if ( asmtab[j] == 0xFF )
-					break;
-				if ( asmtab[j] >= ASM_MACH0 && asmtab[j] <= ASM_MACH6 ) {
-					sprintf( machstr, "ASM_MACH%u", asmtab[j] - ASM_MACH0 );
-					j++;
-				}
-
-				k = (int)asmtab[j] * 256 + asmtab[j+1];
-				l = k % (n_ol_types+1);
-				k = k / (n_ol_types+1);
-
-				if ( k >= 0xD8 && k <= 0xDF )
-					fprintf( f2, "\t fpvariant " );
-				else
-					fprintf( f2, "\t variant " );
-
-				if ( k >= 0x240 )
-					fprintf( f2, "AGRP(%u,%u), %u", (k - 0x240) >> 3, (k - 0x240) & 7, l );
-				else
-					fprintf( f2, "%03xh, %u", k, l );
-				j += 2;
-
-				if ( k >= 0xD8 && k <= 0xDF) {
-					fprintf( f2, ", %03xh", asmtab[j] );
-					j++;
-				}
-				if ( *lockstr == '\0' && machstr[0] == '\0' )
-					fprintf( f2, "\n" );
-				else if ( machstr[0] == '\0' )
-					fprintf( f2, ", %s\n", lockstr );
-				else
-					fprintf( f2, ", %s, %s\n", lockstr, machstr );
-			}
-			fprintf( f2, "\t endvariant\n");
-			i = j;
-		}
-
-	}
-	fputs( "\nend_mnlist label byte\n\n", f2);
-
-	if (offset >= (1 << MSHIFT)) {
-		fprintf(stderr, "%d bytes of mnemonics.  That's too many.\n", offset);
-		exit(1);
-	}
-
-#if 0
-	/* Print the opindex array. */
-
-	auxstr = "\n;--- Array of byte offsets for the oplists array (above)."
-		"\n;--- It is used by the assembler to save space.\n"
-		"\nopindex label byte\n\tdb   0,";
-	for (i = 1; i <= n_ol_types; ++i) {
-		fprintf( f2, "%s%3d", auxstr, oloffset[i-1] - OPTYPES);
-		if ((i & 7) == 7)
-			auxstr = "\n\tdb ";
-		else
-			auxstr = ",";
-	}
-#endif
-
-	/* Print out optype[]. */
-
-	fputs( ";--- Disassembler: compressed table of the opcode types."
-		"\n;--- If the item has the format OT(xx), it refers to table 'oplists'."
-		"\n;--- Otherwise it's an offset for internal table 'disjmp'."
-		"\n\noptypes label byte", f2);
-	auxstr = "\n\tdb ";
-	tblptr = tblcomments;
-
-	for ( i = 0; i < SPARSE_BASE; i += 8 ) {
-		for ( j = 0; j < 8; ++j ) {
-			fputs( auxstr, f2 );
-			if ( optype[i + j] >= OPTYPES ) {
-				int y = 0;
-				if ( optype[i + j] > OPTYPES )
-					for ( y = 1; y <= n_ol_types; y++ )
-						if ( oloffset[y-1] == optype[i + j] )
-							break;
-				if ( y <= n_ol_types )
-					fprintf( f2, "OT(%02X)", y );
-				else
-					fail("offset not found for %u: %X", i+j, optype[i+j] );
-			} else
-				fprintf( f2, "  %03Xh", optype[i + j] );
-			auxstr = ",";
-		}
-		fprintf( f2, "\t; %02x - %02x", i, i + 7 );
-		if ( i == tblptr->seqno ) {
-			fprintf( f2, " (%s)", (tblptr++)->string );
-		}
-		auxstr = "\n\tdb ";
-	}
-
-	fprintf( f2, "\nSPARSE_BASE\tequ $ - optypes\n" );
-
-	auxstr = "\n;--- The rest of these are squeezed.\n" "\tdb      0,";
-	for ( i = SPARSE_BASE, k=1; i < NOPS; ++i )
-		if ( ( j = optype[i] ) != 0 ) {
-			int y = 0;
-			if ( j >= OPTYPES ) {
-				int y = 0;
-				if ( j > OPTYPES )
-					for ( y = 1; y <= n_ol_types; y++ )
-						if ( oloffset[y-1] == j )
-							break;
-				if ( y <= n_ol_types)
-					fprintf( f2, "%sOT(%02X)", auxstr, y );
-				else
-					fail("offset not found for %u: %X", i, j );
-			} else
-				fprintf( f2, "%s  %03Xh", auxstr, j );
-			k++;
-			if ( (k & 7) == 0 ) {
-				fprintf( f2, "\t;%02X", k-8 );
-				auxstr = "\n\tdb ";
-			} else
-				auxstr = ",";
-		}
-	fputs( "\n", f2 );
-
-	/* Print out opinfo[]. */
-
-	fputs( "\n", f2 );
-	for ( i = 1; i < 7; i++ )
-		fprintf( f2, "P%u86\tequ %Xh\n", i, i << MSHIFT );
-
-	fputs( "\n\talign 2\n", f2 );
-
-	fputs( "\n;--- Disassembler: compressed table of additional information."
-		"\n;--- Bits 0-11 usually are the offset of the mnemonics table."
-		"\n;--- Bits 12-15 are the cpu which introduced this opcode."
-		"\n\nopinfo label word\n", f2 );
-
-	for ( i = 0; i < SPARSE_BASE; i += 4 ) {
-		auxstr = "\tdw ";
-		for ( j = 0; j < 4; ++j ) {
-			fputs( auxstr, f2 );
-			if ( opmach[i+j] )
-				fprintf( f2, " P%u86 +", opmach[i+j] );
-			if ( optype[i + j] >= OPTYPES) {
-				fprintf( f2, " MN_%s", mnlist[opinfo[i+j]].string );
-			} else
-				fprintf( f2, " %04xh", opinfo[i+j] );
-			auxstr = ",";
-		}
-		fprintf( f2, "\t; %02x\n", i );
-	}
-	auxstr = ";--- The rest of these are squeezed.\n" "\tdw  0,";
-	for ( i = SPARSE_BASE, k = 1; i < NOPS; ++i ) {
-		if ( (j = optype[i]) != 0 ) {
-			fprintf( f2, auxstr );
-			if (opmach[i])
-				fprintf( f2, " P%u86 +", opmach[i] );
-			if (j >= OPTYPES) {
-				fprintf( f2, " MN_%s", mnlist[opinfo[i]].string );
-			} else
-				fprintf( f2, " %04xh", opinfo[i] );
-			k++;
-			if ( (k & 3) == 0 ) {
-				fprintf( f2, "\t;%02X", k - 4 );
-				auxstr = "\n\tdw ";
-			} else
-				auxstr = ",";
-		}
-	}
-	fputs( "\n", f2 );
-
-	/* Print out sqztab. */
-
-	fputs( "\n;--- Disassembler: table converts unsqueezed numbers to squeezed."
-		"\n;--- 1E0-2DF are extended opcodes (0F xx).\n"
-		"\n\nsqztab label byte\n", f2);
-
-	k = 0;
-	for ( i = SPARSE_BASE; i < NOPS; i += 8 ) {
-		if ( i == SPARSE_BASE + 256 )
-			fprintf( f2, "\n;--- %u sparse groups\n\n", NSGROUPS );
-		else if ( i == SPARSE_BASE + 256 + 8 * NSGROUPS ) {
-			fprintf( f2, "\n;--- %u sparse fpu groups\n\n", NUMBER(sp_fpgrouptab) );
-			fprintf( f2, "SFPGROUPS equ SPARSE_BASE + ( $ - sqztab )\n" );
-			fprintf( f2, "SFPGROUP3 equ SFPGROUPS + 8 * 3\n" );
-		}
-		auxstr = "\tdb ";
-		for ( j = 0; j < 8; ++j ) {
-			fprintf( f2, "%s%3d", auxstr, optype[i + j] == 0 ? 0 : ++k );
-			auxstr = ",";
-		}
-		fprintf( f2, "\t;%X\n", i );
-	}
-
-	/* Print out the cleanup tables. */
-
-	fputs( "\n;--- Disassembler: table of mnemonics that change in the "
-		"presence of a WAIT" "\n;--- instruction.\n\n", f2 );
-	put_dw( f2, "wtab1", startab_seq, n_star_entries );
-#if 0
-	for ( i = 0; i < n_star_entries; ++i )
-		startab_mn[i] = mnlist[startab_mn[i]].offset;
-	put_dw( f2, "wtab2", startab_mn, n_star_entries );
-#else
-	fputs( "wtab2 label word\n", f2 );
-	for ( i = 0; i < n_star_entries; ++i )
-		fprintf( f2, "\tdw MN_%s\n", mnlist[startab_mn[i]].string );
-#endif
-	fprintf( f2, "N_WTAB\tequ ($ - wtab2) / 2\n" );
-
-	fputs( "\n;--- Disassembler: table for operands which have a different "
-		"mnemonic for" "\n;--- their 32 bit versions (66h prefix).\n\n", f2 );
-	put_dw( f2, "ltabo1", slashtab_seq, n_slash_entries );
-#if 0
-	for ( i = 0; i < n_slash_entries; ++i )
-		slashtab_mn[i] = mnlist[slashtab_mn[i]].offset;
-	put_dw( f2, "ltabo2", slashtab_mn, n_slash_entries );
-#else
-	fputs( "ltabo2 label word\n", f2 );
-	for ( i = 0; i < n_slash_entries; ++i )
-		fprintf( f2, "\tdw MN_%s\n", mnlist[slashtab_mn[i]].string );
-#endif
-	fprintf( f2, "N_LTABO\tequ ($ - ltabo2) / 2\n" );
-
-	fputs( "\n;--- Disassembler: table for operands which have a different "
-		"mnemonic for"  "\n;--- their 32 bit versions (67h prefix).\n\n", f2 );
-	put_dw( f2, "ltaba1", hashtab_seq, n_hash_entries );
-#if 0
-	for ( i = 0; i < n_hash_entries; ++i )
-		hashtab_mn[i] = mnlist[hashtab_mn[i]].offset;
-	put_dw( f2, "ltaba2", hashtab_mn, n_hash_entries );
-#else
-	fputs( "ltaba2 label word\n", f2 );
-	for ( i = 0; i < n_hash_entries; ++i )
-		fprintf( f2, "\tdw MN_%s\n", mnlist[hashtab_mn[i]].string );
-#endif
-	fprintf( f2, "N_LTABA\tequ ($ - ltaba2) / 2\n" );
-
-	fputs( "\n;--- Disassembler: table of lockable instructions\n\n" , f2 );
-	put_dw( f2, "locktab label word\n", locktab, n_locktab );
-	fprintf( f2, "N_LOCK\tequ ($ - locktab) / 2\n" );
-
+// Print a "dw" list; add a newline every 8 items.
+void _PutDw(FILE *ExF, int *Tab, int N) {
+   for (; N > 0; N -= 8) {
+      const char *InitS = "\tdw ";
+      for (int n = (N <= 8? N: 8); n > 0; n--) fprintf(ExF, "%s0%xh", InitS, *Tab++), InitS = ",";
+      putc('\n', ExF);
+   }
 }
 
-/* main() - read and process files Op.key, Op.ord, Op.set
- * and then dump DebugTab.inc.
- */
+// Print a labeled "dw" list; add a newline every 8 items.
+static inline void PutDw(FILE *ExF, const char *Label, int *Tab, int N) { fputs(Label, ExF), _PutDw(ExF, Tab, N); }
 
-int main( int argc, char *argv[] )
-{
-	FILE *f1;
-	FILE *f2;
-	int offset;
+void PutPairs(FILE *ExF, const char *Label, int Seq[], int Op[], size_t N) {
+   fprintf(ExF, "%s1", Label), _PutDw(ExF, Seq, N);
+#if 0
+   for (int n = 0; n < N; n++) Op[n] = OpList[Op[n]].Offset;
+   fprintf(ExF, "%s2", Label), _PutDw(ExF, Seq, N);
+#else
+   fprintf(ExF, "%s2 label word\n", Label);
+   for (int n = 0; n < N; n++) fprintf(ExF, "\tdw MN_%s\n", OpList[Op[n]].Id);
+#endif
+}
 
-	/* Read in the key dictionary. */
+char *SpecTab0[] = { "WAIT", "ORG", "DD", "DW", "DB" };
+char *SpecTab1[] = { "LOCKREP", "SEG" };
 
-	f1 = openread( "Op.key" );
-	offset = OPTYPES + 1;
-	while ( GetLine( f1 ) ) {
-		char *p = line;
-		char *q = strchr( p, ';' );
-		int i;
+// Print everything onto the file.
+void PutTables(FILE *ExF) {
+   if (Ops == 0) Fatal("No assembler mnemonics!");
+// Sort the mnemonics alphabetically.
+   OpBase = SortOp(OpList, Ops);
+   if (!SortOps) {
+      for (int o = 0; o < Ops; o++) OpList[o].Next = &OpList[o + 1];
+      OpList[Ops - 1].Next = NULL;
+   }
+// Print out the banner and the oplists[].
+   fprintf(ExF,
+      "\n"
+      ";; --- This file was generated by MakeTabs.exe.\n"
+      "\n"
+      ";; --- Operand type lists.\n"
+      ";; --- They were read from file Op.key.\n"
+      "\n"
+      "oplists label byte\n\topl\t;; void - for instructions without operands\n"
+   );
+   for (int K = 0; K < Keys; K++) {
+#if 0
+      unsigned char KeySize[4];
+      if (KeyDict[K].Key > 0xff) {
+         KeySize[0] = (unsigned char)(KeyDict[K].Key >> 8);
+         KeySize[1] = (unsigned char)(KeyDict[K].Key&0xff);
+         KeySize[2] = '\0';
+      } else {
+         KeySize[0] = (unsigned char)(KeyDict[K].Key);
+         KeySize[1] = '\0';
+      }
+      fprintf(ExF, "\topl %s, %s\t;; ofs=%Xh\n", KeySize, NameTab[K], OffsetTab[K]);
+#else
+      fprintf(ExF, "\topl %s\t;; idx=%u, ofs=%Xh\n", NameTab[K], K + 1, OffsetTab[K]);
+#endif
+   }
+#if 0
+   fprintf(ExF, "\nOPLIST_27\tEQU 0%Xh\t;; this is the OP_IMM8 key\n", OffsetTab[LookUpKey('27')->Value]);
+   fprintf(ExF, "OPLIST_41\tEQU 0%Xh\t;; this is the OP_ES key\n", OffsetTab[LookUpKey('41')->Value]);
+#endif
+#if 0
+   fprintf(ExF, "\nASMMOD\tEQU %u\n", Keys + 1);
+#else
+   fprintf(ExF, "\nASMMOD\tEQU opidx\n");
+#endif
+// Dump out AGroupInf.
+   fprintf(ExF,
+      "\n"
+      ";; --- Assembler: data on groups.\n"
+      ";; --- If HiByte == 01, it's a \"0f-prefix\" group.\n"
+      "\n"
+      "agroups label word\n"
+   );
+   for (int G = 0; G < AGroups; G++) fprintf(ExF, "\tdw %03Xh\t;; %u\n", AGroupInf[G], G);
+// Dump out AsmTab.
+   fprintf(ExF,
+      "\n"
+      ";; --- List of assembler mnemonics and data.\n"
+      ";; --- variant's 1. argument (=a):\n"
+      ";; ---   if a < 0x100: one byte opcode.\n"
+      ";; ---   if a >= 0x100 && a < 0x200: two byte \"0f\"-opcode.\n"
+      ";; ---   if a >= 0x200 && a < 0x240: fp instruction.\n"
+      ";; ---   if a >= 0x240: refers to agroups [macro AGRP() is used].\n"
+      ";; --- variant's 2. argument is index into array opindex.\n"
+      "\n"
+      "mnlist label byte\n"
+   );
+   int Offset = 0;
+   for (OpT Op = OpBase; Op != NULL; Op = Op->Next) {
+      Op->Offset = Offset + 2;
+      Offset += Op->Len + 2;
+      fprintf(ExF, "\tmne %s", Op->Id);
+      int I = Op->AsmOffset;
+      if (AsmTab[I] == D16A && AsmTab[I + 1] == D32A)
+#if 0
+         fprintf(ExF, ", ASM_D16\t;; ofs=%04x\n", I);
+#else
+         fprintf(ExF, ", ASM_D16\t;; ofs=%Xh\n", I);
+#endif
+      else if (AsmTab[I] >= WaitA)
+         fprintf(ExF, ", ASM_%s\t;; ofs=%Xh\n", SpecTab0[AsmTab[I] - WaitA], I);
+      else if ((AsmTab[I] == SegA || AsmTab[I] == LockRepA))
+         fprintf(ExF, ", ASM_%s, %03xh\t;; ofs=%Xh\n", SpecTab1[AsmTab[I] - LockRepA], AsmTab[I + 1], I);
+      else {
+         int A = I;
+         for (; AsmTab[A] > SegA && AsmTab[A] < WaitA; A++) switch (AsmTab[A]) {
+            case AaxA: fprintf(ExF, ", ASM_AAX"); break;
+            case D16A: fprintf(ExF, ", ASM_D16"); break;
+            case D32A: fprintf(ExF, ", ASM_D32"); break;
+         }
+         fprintf(ExF, "\t;; ofs=%Xh\n", I);
+         for (; A < Asms; ) {
+            char CPU[12] = { "" };
+            if (AsmTab[A] == 0xff) break;
+            char *LockS = "";
+            if (AsmTab[A] == LockableA) LockS = "ASM_LOCKABLE", A++;
+         // There's a problem with dec and inc!
+            if (AsmTab[A] == 0xff) break;
+            else if (AsmTab[A] >= Mach0A && AsmTab[A] <= Mach6A) sprintf(CPU, "ASM_MACH%u", AsmTab[A++] - Mach0A);
+            unsigned K = (int)AsmTab[A]*0x100 + AsmTab[A + 1], L = K%(Keys + 1);
+            K /= Keys + 1;
+            fprintf(ExF, "\t %s ", K >= 0330 && K < 0340? "fpvariant": "variant");
+            if (K >= 0x240) fprintf(ExF, "AGRP(%u,%u), %u", (K - 0x240) >> 3, (K - 0x240)&7, L);
+            else fprintf(ExF, "%03xh, %u", K, L);
+            A += 2;
+            if (K >= 0330 && K < 0340) fprintf(ExF, ", %03xh", AsmTab[A++]);
+            if (*CPU != '\0') fprintf(ExF, ", %s, %s\n", LockS, CPU);
+            else if (*LockS != '\0') fprintf(ExF, ", %s\n", LockS);
+            else putc('\n', ExF);
+         }
+         fprintf(ExF, "\t endvariant\n");
+         I = A;
+      }
+   }
+   fprintf(ExF, "\nend_mnlist label byte\n\n");
+   if (Offset >= (1 << ShiftM)) fprintf(stderr, "%d bytes of mnemonics. That's too many.\n", Offset), exit(EXIT_FAILURE);
+   char *AuxS;
+#if 0
+// Print the opindex array.
+   AuxS =
+      "\n"
+      ";; --- Array of byte offsets for the oplists array (above).\n"
+      ";; --- It is used by the assembler to save space.\n"
+      "\n"
+      "opindex label byte\n"
+      "\tdb   0,";
+   for (int K = 1; K <= Keys; K++) fprintf(ExF, "%s%3d", AuxS, OffsetTab[K - 1] - OPTYPES), AuxS = (K&7) == 7? "\n\tdb ": ",";
+#endif
+// Print out OpType[].
+   fprintf(ExF,
+      ";; --- Disassembler: compressed table of the opcode types.\n"
+      ";; --- If the item has the format OT(xx), it refers to table 'oplists'.\n"
+      ";; --- Otherwise it's an offset for internal table 'disjmp'.\n"
+      "\n"
+      "optypes label byte"
+   );
+   AuxS = "\n\tdb ";
+   struct InfoRec *TabP = CommentTab;
+   for (int I = 0; I < SPARSE_BASE; I += 8) {
+      for (int J = 0; J < 8; J++) {
+         fputs(AuxS, ExF);
+         if (OpType[I + J] >= OPTYPES) {
+            int K = 0;
+            if (OpType[I + J] > OPTYPES) for (K = 1; K <= Keys; K++) if (OffsetTab[K - 1] == OpType[I + J]) break;
+            if (K <= Keys) fprintf(ExF, "OT(%02X)", K); else Fatal("offset not found for %u: %X", I + J, OpType[I + J]);
+         } else fprintf(ExF, "  %03Xh", OpType[I + J]);
+         AuxS = ",";
+      }
+      fprintf(ExF, "\t;; %02x - %02x", I, I + 7);
+      if (I == TabP->Seq) fprintf(ExF, " (%s)", (TabP++)->Id);
+      AuxS = "\n\tdb ";
+   }
+   fprintf(ExF, "\nSPARSE_BASE\tequ $ - optypes\n");
+   AuxS =
+      "\n"
+      ";; --- The rest of these are squeezed.\n"
+      "\tdb      0,";
+   for (int I = SPARSE_BASE, X = 1; I < NOPS; I++) {
+      int J = OpType[I]; if (J == 0) continue;
+      int K = 0;
+      if (J >= OPTYPES) {
+         int K = 0;
+         if (J > OPTYPES) for (K = 1; K <= Keys; K++) if (OffsetTab[K - 1] == J) break;
+         if (K <= Keys) fprintf(ExF, "%sOT(%02X)", AuxS, K); else Fatal("offset not found for %u: %X", I, J);
+      } else fprintf(ExF, "%s  %03Xh", AuxS, J);
+      X++;
+      if ((X&7) == 0) fprintf(ExF, "\t;; %02X", X - 8), AuxS = "\n\tdb "; else AuxS = ",";
+   }
+   putc('\n', ExF);
+// Print out OpInfo[].
+   putc('\n', ExF);
+   for (int I = 1; I < 7; I++) fprintf(ExF, "P%u86\tequ %Xh\n", I, I << ShiftM);
+   fprintf(ExF,
+      "\n"
+      "\talign 2\n"
+      "\n"
+      ";; --- Disassembler: compressed table of additional information.\n"
+      ";; --- Bits 0-11 usually are the offset of the mnemonics table.\n"
+      ";; --- Bits 12-15 are the cpu which introduced this opcode.\n"
+      "\n"
+      "opinfo label word\n"
+   );
+   for (int I = 0; I < SPARSE_BASE; I += 4) {
+      AuxS = "\tdw ";
+      for (int J = 0; J < 4; J++) {
+         fputs(AuxS, ExF);
+         if (OpCPU[I + J]) fprintf(ExF, " P%u86 +", OpCPU[I + J]);
+         if (OpType[I + J] >= OPTYPES) fprintf(ExF, " MN_%s", OpList[OpInfo[I + J]].Id);
+         else fprintf(ExF, " %04xh", OpInfo[I + J]);
+         AuxS = ",";
+      }
+      fprintf(ExF, "\t;; %02x\n", I);
+   }
+   AuxS =
+      ";; --- The rest of these are squeezed.\n"
+      "\tdw  0,";
+   for (int I = SPARSE_BASE, X = 1; I < NOPS; I++) {
+      int J = OpType[I]; if (J == 0) continue;
+      fprintf(ExF, AuxS);
+      if (OpCPU[I]) fprintf(ExF, " P%u86 +", OpCPU[I]);
+      if (J >= OPTYPES) fprintf(ExF, " MN_%s", OpList[OpInfo[I]].Id); else fprintf(ExF, " %04xh", OpInfo[I]);
+      X++;
+      if ((X&3) == 0) fprintf(ExF, "\t;; %02X", X - 4), AuxS = "\n\tdw "; else AuxS = ",";
+   }
+   putc('\n', ExF);
+// Print out sqztab.
+   fprintf(ExF,
+      "\n"
+      ";; --- Disassembler: table converts unsqueezed numbers to squeezed.\n"
+      ";; --- 1E0-2DF are extended opcodes (0f xx).\n"
+      "\n"
+      "\n"
+      "sqztab label byte\n"
+   );
+   for (int I = SPARSE_BASE, X = 0; I < NOPS; I += 8) {
+      if (I == SPARSE_BASE + 0x100) fprintf(ExF, "\n;; --- %u sparse groups\n\n", NSGROUPS);
+      else if (I == SPARSE_BASE + 0x100 + 010*NSGROUPS) {
+         fprintf(ExF, "\n;; --- %u sparse fpu groups\n\n", Members(SpFpGroupTab));
+         fprintf(ExF, "SFPGROUPS equ SPARSE_BASE + ($ - sqztab)\n");
+         fprintf(ExF, "SFPGROUP3 equ SFPGROUPS + 8 * 3\n");
+      }
+      AuxS = "\tdb ";
+      for (int J = 0; J < 8; J++) fprintf(ExF, "%s%3d", AuxS, OpType[I + J] == 0? 0: ++X), AuxS = ",";
+      fprintf(ExF, "\t;; %X\n", I);
+   }
+// Print out the cleanup tables.
+   fprintf(ExF,
+      "\n"
+      ";; --- Disassembler: table of mnemonics that change in the presence of a WAIT\n"
+      ";; --- instruction.\n"
+      "\n"
+   );
+   PutPairs(ExF, "wtab", StarSeq, StarOp, Stars);
+   fprintf(ExF,
+      "N_WTAB\tequ ($ - wtab2) / 2\n"
+      "\n"
+      ";; --- Disassembler: table for operands which have a different mnemonic for\n"
+      ";; --- their 32 bit versions (66h prefix).\n"
+      "\n"
+   );
+   PutPairs(ExF, "ltabo", SlashSeq, SlashOp, Slashes);
+   fprintf(ExF,
+      "N_LTABO\tequ ($ - ltabo2) / 2\n"
+      "\n"
+      ";; --- Disassembler: table for operands which have a different mnemonic for\n"
+      ";; --- their 32 bit versions (67h prefix).\n"
+      "\n"
+   );
+   PutPairs(ExF, "ltaba", HashSeq, HashOp, Hashes);
+   fprintf(ExF,
+      "N_LTABA\tequ ($ - ltaba2) / 2\n"
+      "\n"
+      ";; --- Disassembler: table of lockable instructions\n"
+      "\n"
+   );
+   PutDw(ExF, "locktab label word\n", LockTab, Locks);
+   fprintf(ExF, "N_LOCK\tequ ($ - locktab) / 2\n");
+}
 
-		if ( q ) {
-			*q = '\0';
-			q--;
-			while ( q > p && (*q == ' ' || *q == '\t') ) {
-				*q = '\0';
-				q--;
-			}
-		}
-
-		if ( n_keys >= MAX_OL_TYPES )
-			fail("Too many keys.");
-		olkeydict[n_keys].key = getkey( &p );
-		p = skipwhite( p );
-		for ( i = 0;; ++i ) {
-			if ( i >= n_ol_types ) {
-				char *q = xmalloc( strlen( p ) + 1, "operand type name" );
-
-				strcpy( q, p );
-				if ( n_ol_types >= MAX_OL_TYPES )
-					fail( "Too many operand list types." );
-				olnames[n_ol_types] = q;
-				oloffset[n_ol_types] = offset;
-				for ( ;; ) {
-					++offset;
-					q = strchr(q, ',');
-					if ( q == NULL ) break;
-					++q;
-				}
-				++offset;
-				++n_ol_types;
-			}
-			if ( strcmp(p, olnames[i]) == 0 )
-				break;
-		}
-		olkeydict[n_keys].value = i;
-		olkeydict[n_keys].width = 1;
-		if ( strstr( p, "OP_ALL" ) != NULL )
-			olkeydict[n_keys].width = 2;
-		else if ( strstr( p, "OP_R_ADD" ) != NULL )
-			olkeydict[n_keys].width = 8;
-		++n_keys;
-	}
-	fclose( f1 );
-	if ( offset >= 256 ) {
-		fprintf( stderr, "%d bytes of operand lists.  That's too many.\n",
-				offset );
-		exit( 1 );
-	}
-
-	/* Read in the ordering relations. */
-
-	f1 = openread( "Op.ord" );
-	while ( GetLine( f1 ) ) {
-		char *p = line;
-
-		if ( n_ords >= MAX_N_ORDS )
-			fail ( "Too many ordering restrictions." );
-		keyord1[n_ords] = lookupkey( getkey( &p ) );
-		p = skipwhite(p);
-		keyord2[n_ords] = lookupkey( getkey( &p ) );
-		if ( *p != '\0' )
-			fail( "Syntax error in ordering file." );
-		++n_ords;
-	}
-	fclose( f1 );
-
-	/* Do the main processing. */
-
-	f1 = openread( "Op.set" );
-	read_is( f1 );
-	fclose( f1 );
-
-	/* Write the file. */
-
-	f2 = fopen( "DebugTab.tmp", "w" );
-	if ( f2 == NULL ) {
-		perror( "DebugTab.tmp" );
-		exit( 1 );
-	}
-
-	dumptables( f2 );
-
-	fclose( f2 );
-
-	/* Move the file to its original position. */
-
-//	unlink( "DebugTab.old" );
-	remove( "DebugTab.old" );
-
-	if ( rename( "DebugTab.inc", "DebugTab.old" ) == -1 ) {
-		perror( "rename DebugTab.inc -> DebugTab.old" );
-		//return 1;
-	}
-	if ( rename( "DebugTab.tmp", "DebugTab.inc" ) == -1 ) {
-		perror( "rename DebugTab.tmp -> DebugTab.inc" );
-		return 1;
-	}
-
-	puts( "Done." );
-
-	return 0;
+// Read and process files Op.key, Op.ord, Op.set and then dump DebugTab.inc.
+int main(void) {
+// Read in the key dictionary.
+   FILE *KeyF = OpenRead("Op.key");
+   int Offset = OPTYPES + 1;
+   while (GetLine(KeyF)) {
+      char *S = LineBuf, *EndS = strchr(S, ';');
+      if (EndS != NULL) do *EndS-- = '\0'; while (EndS > S && (*EndS == ' ' || *EndS == '\t'));
+      if (KeyN >= TypeMax) Fatal("Too many keys.");
+      KeyDict[KeyN].Key = GetKey(&S);
+      S = SpaceOver(S);
+      int K = 0;
+      for (; ; K++) {
+         if (K >= Keys) {
+            char *Name = Allocate(strlen(S) + 1, "operand type name");
+            strcpy(Name, S);
+            if (Keys >= TypeMax) Fatal("Too many operand list types.");
+            NameTab[Keys] = Name, OffsetTab[Keys] = Offset++;
+            while ((Name = strchr(Name, ',')) != NULL) Name++, Offset++;
+            Keys++, Offset++;
+         }
+         if (strcmp(S, NameTab[K]) == 0) break;
+      }
+      KeyDict[KeyN].Value = K, KeyDict[KeyN].Width = strstr(S, "OP_ALL") != NULL? 2: strstr(S, "OP_R_ADD") != NULL? 8: 1;
+      KeyN++;
+   }
+   fclose(KeyF);
+   if (Offset >= 0x100) { fprintf(stderr, "%d bytes of operand lists. That's too many.\n", Offset); return EXIT_FAILURE; }
+// Read in the ordering relations.
+   FILE *OrdF = OpenRead("Op.ord");
+   while (GetLine(OrdF)) {
+      char *S = LineBuf;
+      if (Ords >= OrdMax) Fatal("Too many ordering restrictions.");
+      Ord0[Ords] = FindKey(&S);
+      S = SpaceOver(S);
+      Ord1[Ords] = FindKey(&S);
+      if (*S != '\0') Fatal("Syntax error in ordering file.");
+      Ords++;
+   }
+   fclose(OrdF);
+// Do the main processing.
+   FILE *SetF = OpenRead("Op.set");
+   GetOps(SetF), fclose(SetF);
+// Write the file.
+   FILE *ExF = fopen("DebugTab.inc", "w"); if (ExF == NULL) { perror("DebugTab.inc"); return EXIT_FAILURE; }
+   PutTables(ExF), fclose(ExF);
+   puts("Done.");
+   return EXIT_SUCCESS;
 }
