@@ -1,33 +1,30 @@
-
 ;; --- debugger entries for DPMI protected-mode
-;; --- exceptions (0, 1, 3, 6, 7, C, D, E)
-
+;; --- exceptions (0, 1, 3, 6, 7, c, d, e)
 ;; --- stack frames DPMI exception handlers 16/32-bit
-
 EXFR16 struc
-		dw 8 dup (?)	;; pusha
+	dw 8 dup (?)	;; pusha
 wMsg	dw ?
-		dw 2 dup (?)	;; far16 return to DPMI
+	dw 2 dup (?)	;; far16 return to DPMI
 wErrC	dw ?
-rIP		dw ?
-rCS		dw ?
-rFL		dw ?
-rSP		dw ?
-rSS		dw ?
+rIP	dw ?
+rCS	dw ?
+rFL	dw ?
+rSP	dw ?
+rSS	dw ?
 EXFR16 ends
 
 EXFR32 struc
-		dd 8 dup (?)	;; pushad
+	dd 8 dup (?)	;; pushad
 wMsg	dw ?
-		dd 2 dup (?)	;; far32 return to DPMI
+	dd 2 dup (?)	;; far32 return to DPMI
 dwErrC	dd ?
 rEIP	dd ?
-rCS		dw ?
-		dw ?
+rCS	dw ?
+	dw ?
 rEFL	dd ?
 rESP	dd ?
-rSS		dw ?
-		dw ?
+rSS	dw ?
+	dw ?
 EXFR32 ends
 
 excxx_16:
@@ -130,9 +127,8 @@ exc_xx:
 	jz isdebuggee32
 if EXCCSIP
 ;; --- it's assumed that an exception in DEBUG is always in 16-bit code,
-;; --- but this isn't necessarily true, since the debuggee may have hooked
-;; --- exceptions. Since v2.0, this is less probable, because DebugX will
-;; --- always restore exception handlers 0D/0E on entry.
+;; --- but this isn't necessarily true, since the debuggee may have hooked exceptions.
+;; --- Since v2.0, this is less probable, because DebugX will always restore exception handlers 0d/0e on entry.
 	mov SI, BX
 endif
 	mov [EBP].EXFR32.rEIP,offset ue_intx
@@ -179,4 +175,3 @@ back2dpmi32:
 	popad
 	add SP, 2
 	retd
-

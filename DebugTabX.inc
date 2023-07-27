@@ -6,87 +6,87 @@
 
 oplists label byte
 	opl	;; void - for instructions without operands
-	opl OpX+_Ax, OpX+_Ix	;; idx=01, ofs=00dh
-	opl OpX+_Ex, OpX+_Ix	;; idx=02, ofs=010h
-	opl OpV+_Ex, _Ds	;; idx=03, ofs=013h
-	opl OpX+_Ex, OpX+_Rx	;; idx=04, ofs=016h
-	opl OpX+_Rx, OpX+_Ex	;; idx=05, ofs=019h
-	opl OpW+_Ex, OpW+_Rx	;; idx=06, ofs=01ch
-	opl OpV+_Rx, OpV+_Mx	;; idx=07, ofs=01fh
-	opl OpV+_Rx, OpV+_Ex	;; idx=08, ofs=022h
-	opl OpD+_rx	;; idx=09, ofs=025h
-	opl OpV+_Ex, OpV+_Rx	;; idx=10, ofs=027h
-	opl OpV+_Ex, _Db	;; idx=11, ofs=02ah
+	opl _Ax, _Ix	;; idx=01, ofs=00dh
+	opl _Ex, _Ix	;; idx=02, ofs=010h
+	opl _Ev, _Ds	;; idx=03, ofs=013h
+	opl _Ex, _Rx	;; idx=04, ofs=016h
+	opl _Rx, _Ex	;; idx=05, ofs=019h
+	opl _Ew, _Rw	;; idx=06, ofs=01ch
+	opl _Rv, _Mv	;; idx=07, ofs=01fh
+	opl _Rv, _Ev	;; idx=08, ofs=022h
+	opl _rd	;; idx=09, ofs=025h
+	opl _Ev, _Rv	;; idx=10, ofs=027h
+	opl _Ev, _Db	;; idx=11, ofs=02ah
 	opl _Jv	;; idx=12, ofs=02dh
 	opl _Af	;; idx=13, ofs=02fh
 	opl _Mf	;; idx=14, ofs=031h
 	opl _Q	;; idx=15, ofs=033h
-	opl OpX+_Ex	;; idx=16, ofs=035h
-	opl OpV+_rx	;; idx=17, ofs=037h
-	opl OpW+_Ix, _Db	;; idx=18, ofs=039h
+	opl _Ex	;; idx=16, ofs=035h
+	opl _rv	;; idx=17, ofs=037h
+	opl _Iw, _Db	;; idx=18, ofs=039h
 	opl _MF	;; idx=19, ofs=03ch
 	opl _MD	;; idx=20, ofs=03eh
 	opl _ST, _STi	;; idx=21, ofs=040h
 	opl _STi, _ST	;; idx=22, ofs=043h
 	opl _ST1, _STi, _ST	;; idx=23, ofs=046h
-	opl OpD+_Mx	;; idx=24, ofs=04ah
-	opl OpW+_Mx	;; idx=25, ofs=04ch
+	opl _Md	;; idx=24, ofs=04ah
+	opl _Mw	;; idx=25, ofs=04ch
 	opl _MLD	;; idx=26, ofs=04eh
 	opl _STi	;; idx=27, ofs=050h
 	opl _ST1, _STi	;; idx=28, ofs=052h
-	opl _Mxx	;; idx=29, ofs=055h
-	opl OpW+_Ax	;; idx=30, ofs=057h
-	opl OpV+_Rx, OpV+_Ex, _Ds	;; idx=31, ofs=059h
-	opl OpV+_Xx, OpV+_Rx, _Ds	;; idx=32, ofs=05dh
-	opl OpV+_Rx, OpV+_Ex, OpV+_Ix	;; idx=33, ofs=061h
-	opl OpV+_Xx, OpV+_Rx, OpV+_Ix	;; idx=34, ofs=065h
-	opl OpX+_Ax, _Db	;; idx=35, ofs=069h
-	opl OpX+_Ax, _DX	;; idx=36, ofs=06ch
+	opl _Mx	;; idx=29, ofs=055h
+	opl _Aw	;; idx=30, ofs=057h
+	opl _Rv, _Ev, _Ds	;; idx=31, ofs=059h
+	opl _Xv, _Rv, _Ds	;; idx=32, ofs=05dh
+	opl _Rv, _Ev, _Iv	;; idx=33, ofs=061h
+	opl _Xv, _Rv, _Iv	;; idx=34, ofs=065h
+	opl _Ax, _Db	;; idx=35, ofs=069h
+	opl _Ax, _DX	;; idx=36, ofs=06ch
 	opl _3	;; idx=37, ofs=06fh
 	opl _Db	;; idx=38, ofs=071h
 	opl _Jb	;; idx=39, ofs=073h
-	opl OpV+_Ex	;; idx=40, ofs=075h
-	opl OpW+_Ex	;; idx=41, ofs=077h
-	opl OpV+_Ex, _Rs	;; idx=42, ofs=079h
-	opl _Rs, OpV+_Ex	;; idx=43, ofs=07ch
-	opl OpX+_Ax, OpX+_Ox	;; idx=44, ofs=07fh
-	opl OpX+_Ox, OpX+_Ax	;; idx=45, ofs=082h
-	opl OpB+_rx, OpB+_Ix	;; idx=46, ofs=085h
-	opl OpV+_rx, OpV+_Ix	;; idx=47, ofs=088h
-	opl OpV+_Rx, _N, OpB+_Ex	;; idx=48, ofs=08bh
-	opl OpV+_Rx, _N, OpW+_Ex	;; idx=49, ofs=08fh
-	opl _Db, OpX+_Ax	;; idx=50, ofs=093h
-	opl _DX, OpX+_Ax	;; idx=51, ofs=096h
-	opl OpV+_Mx	;; idx=52, ofs=099h
-;	opl _N, OpV+_Ix	;; idx=53, ofs=09bh
-	opl OpV+_Ix	;; idx=53, ofs=09bh
+	opl _Ev	;; idx=40, ofs=075h
+	opl _Ew	;; idx=41, ofs=077h
+	opl _Ev, _Rs	;; idx=42, ofs=079h
+	opl _Rs, _Ev	;; idx=43, ofs=07ch
+	opl _Ax, _Ox	;; idx=44, ofs=07fh
+	opl _Ox, _Ax	;; idx=45, ofs=082h
+	opl _rb, _Ib	;; idx=46, ofs=085h
+	opl _rv, _Iv	;; idx=47, ofs=088h
+	opl _Rv, _N, _Eb	;; idx=48, ofs=08bh
+	opl _Rv, _N, _Ew	;; idx=49, ofs=08fh
+	opl _Db, _Ax	;; idx=50, ofs=093h
+	opl _DX, _Ax	;; idx=51, ofs=096h
+	opl _Mv	;; idx=52, ofs=099h
+;	opl _N, _Iv	;; idx=53, ofs=09bh
+	opl _Iv	;; idx=53, ofs=09bh
 	opl _N, _Ds	;; idx=54, ofs=09eh
-	opl OpX+_Ex, _1	;; idx=55, ofs=0a1h
-	opl OpX+_Ex, _CL	;; idx=56, ofs=0a4h
-	opl OpX+_Ex, _Db	;; idx=57, ofs=0a7h
-	opl OpW+_Ix	;; idx=58, ofs=0aah
-	opl OpB+_Ex	;; idx=59, ofs=0ach
-	opl OpV+_Ex, OpV+_Rx, _Db	;; idx=60, ofs=0aeh
-	opl OpV+_Ex, OpV+_Rx, _CL	;; idx=61, ofs=0b2h
-	opl OpV+_Ax, OpV+_rx	;; idx=62, ofs=0b6h
-	opl OpV+_rx, OpV+_Ax	;; idx=63, ofs=0b9h
+	opl _Ex, _1	;; idx=55, ofs=0a1h
+	opl _Ex, _CL	;; idx=56, ofs=0a4h
+	opl _Ex, _Db	;; idx=57, ofs=0a7h
+	opl _Iw	;; idx=58, ofs=0aah
+	opl _Eb	;; idx=59, ofs=0ach
+	opl _Ev, _Rv, _Db	;; idx=60, ofs=0aeh
+	opl _Ev, _Rv, _CL	;; idx=61, ofs=0b2h
+	opl _Av, _rv	;; idx=62, ofs=0b6h
+	opl _rv, _Av	;; idx=63, ofs=0b9h
 	opl _ES	;; idx=64, ofs=0bch
 	opl _CS	;; idx=65, ofs=0beh
 	opl _SS	;; idx=66, ofs=0c0h
 	opl _DS	;; idx=67, ofs=0c2h
 	opl _FS	;; idx=68, ofs=0c4h
 	opl _GS	;; idx=69, ofs=0c6h
-	opl OpD+_Xx, _CRx	;; idx=70, ofs=0c8h
-	opl _CRx, OpD+_Xx	;; idx=71, ofs=0cbh
-	opl OpD+_Xx, _DRx	;; idx=72, ofs=0ceh
-	opl _DRx, OpD+_Xx	;; idx=73, ofs=0d1h
-	opl OpD+_Xx, _TRx	;; idx=74, ofs=0d4h
-	opl _TRx, OpD+_Xx	;; idx=75, ofs=0d7h
+	opl _Xd, _CRx	;; idx=70, ofs=0c8h
+	opl _CRx, _Xd	;; idx=71, ofs=0cbh
+	opl _Xd, _DRx	;; idx=72, ofs=0ceh
+	opl _DRx, _Xd	;; idx=73, ofs=0d1h
+	opl _Xd, _TRx	;; idx=74, ofs=0d4h
+	opl _TRx, _Xd	;; idx=75, ofs=0d7h
 if MMXSUPP
-	opl _MMx, OpD+_Ex	;; idx=76, ofs=0dah
-	opl OpD+_Ex, _MMx	;; idx=77, ofs=0ddh
-	opl _MMx, OpQ+_Ex	;; idx=78, ofs=0e0h
-	opl OpQ+_Ex, _MMx	;; idx=79, ofs=0e3h
+	opl _MMx, _Ed	;; idx=76, ofs=0dah
+	opl _Ed, _MMx	;; idx=77, ofs=0ddh
+	opl _MMx, _Eq	;; idx=78, ofs=0e0h
+	opl _Eq, _MMx	;; idx=79, ofs=0e3h
 endif
 
 ASMMOD	EQU opidx
@@ -985,14 +985,14 @@ endif
 	 variant AGRP(8,3), 41, , ASM_MACH2
 	 endvariant
 	mne MOV	;; ofs=4e8h
-	 variant 0a0h, 44       ;; mov AL/AX, []
-	 variant 0a2h, 45       ;; mov [], AL/AX
-	 variant 088h, 4        ;; mov [], reg
-	 variant 08ah, 5        ;; mov reg, []
-	 variant 08ch, 42       ;; mov m16/reg, sreg
-	 variant 08eh, 43       ;; mov sreg, m16/reg
-	 variant 0b0h, 46       ;; mov reg16, imm
-	 variant 0b8h, 47       ;; mov reg8, imm
+	 variant 0a0h, 44	;; mov AL/AX, []
+	 variant 0a2h, 45	;; mov [], AL/AX
+	 variant 088h, 4	;; mov [], reg
+	 variant 08ah, 5	;; mov reg, []
+	 variant 08ch, 42	;; mov m16/reg, sreg
+	 variant 08eh, 43	;; mov sreg, m16/reg
+	 variant 0b0h, 46	;; mov reg16, imm
+	 variant 0b8h, 47	;; mov reg8, imm
 	 variant AGRP(9,0), 2
 	 variant 120h, 70, , ASM_MACH3
 	 variant 122h, 71, , ASM_MACH3

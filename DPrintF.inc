@@ -1,8 +1,8 @@
 ;; --- debug printf - all registers preserved, including flags
 
 if CATCHINT41
-;; --- .486 makes jwasm avoid LEAVE generation - problem if stack is 32-bit
-;; --- and hiword(EBP) != 0. That can happen for @dprintf inside intr41().
+;; --- .486 makes jwasm avoid leave generation - problem if stack is 32-bit and hiword(EBP) != 0.
+;; --- That can happen for @dprintf inside intr41().
 	.486
 endif
 
@@ -15,7 +15,7 @@ handle_char proc
 @@:
 	push BX
 	xor BX, BX
-	mov AH, 0Eh
+	mov AH, 0eh
 if RING0
 	call CS:[int10vec]
 else
@@ -74,10 +74,10 @@ ltob endp
 ;; --- SS doesn't need to be dgroup
 ;; --- v2.1: SS may be 32-bit!
 dprintf proc
-d_sp   equ word ptr [BP+16+2]
-d_ret  equ word ptr [BP+16+2+2]
-d_fmt  equ word ptr [BP+16+2+2+2]
-d_args equ word ptr [BP+16+2+2+2+2]
+d_sp	equ word ptr [BP+16+2]
+d_ret	equ word ptr [BP+16+2+2]
+d_fmt	equ word ptr [BP+16+2+2+2]
+d_args	equ word ptr [BP+16+2+2+2+2]
 
 if 0
 local size_: word
@@ -86,11 +86,11 @@ local longarg: byte
 local fill: byte
 local szTmp[12]: byte
 else
-d_size    equ <[BP-2]>
-d_flag    equ <byte ptr [BP-3]>
-d_longarg equ <byte ptr [BP-4]>
-d_fill    equ <byte ptr [BP-5]>
-d_szTmp   equ <[BP-18]>
+d_size		equ <[BP-2]>
+d_flag		equ <byte ptr [BP-3]>
+d_longarg	equ <byte ptr [BP-4]>
+d_fill		equ <byte ptr [BP-5]>
+d_szTmp		equ <[BP-18]>
 endif
 
 	push SP
@@ -226,7 +226,7 @@ handle_s:
 	mov SI, SS:[DI]
 	add DI, 2
 
-output_string: ;; display string at DS:SI
+output_string:	;; display string at DS:SI
 	mov AX, SI
 	mov BX, d_size
 	.while byte ptr [SI]

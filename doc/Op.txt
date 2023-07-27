@@ -60,7 +60,7 @@
 ##	v	;; 2/4-bytes, based on the operand size mode.
 ##	x	;; 1/2/4-bytes, in most cases: the size is determined by the low-order bit of the opcode.
 ##	q	;; 8-bytes
-## The order of the groups must match the items in asm_jmp1, bittab and dis_jmp1:
+## The order of the groups must match the items in AsmJump1, BitTab and DisJump1:
 ##	_Ix,_Iv,_Ib,_Iw		;; Immediate.
 ##	_Ex,_Ev,_Eb,_Ew,_Ed,_Eq	;; Register/Memory, determined from xr in xrm: memory if x ≠ 3, register if x ≡ 3.
 ##	_Mv,_Mw,_Md		;; Memory (but not Register), determined from xm in xrm, with x ≠ 3.

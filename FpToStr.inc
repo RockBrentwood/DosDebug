@@ -4,7 +4,6 @@
 ;; --- FloatToStr
 
 ;; These are bits in the FP status word.
-
 FP_LESSTHAN	equ 01h
 FP_EQUALTO	equ 40h
 
@@ -74,7 +73,7 @@ PowerOf10 proc uses SI
 mul10:
 	dec BL
 	push AX
-	mov AL, 10		;; sizeof TBYTE
+	mov AL, 10		;; sizeof tbyte
 	mul BL
 	xchg BX, AX
 	pop AX
@@ -86,7 +85,7 @@ PowerOf10 endp
 ;; Convert a floating point register to ASCII.
 ;; For internal use.
 ;; The result always has exactly 18 digits, with zero padding on the left if required.
-;; Entry:	ST(0) = a number to convert, 0 <= ST(0) < 1E19.
+;; Entry:	ST(0) = a number to convert, 0 <= ST(0) < 1e19.
 ;;		DI = an 18-character buffer.
 ;; modifies SI, DI, CX, AX
 FloatToBCD proc
@@ -129,7 +128,7 @@ if 0
 	rol AH, 4		;; xxxx BBBB xxxx AAAA
 	and AX, 0f0fh		;; 0000 BBBB 0000 AAAA
 else
-	db 0D4h, 10h		;; aam 16: 0000 AAAA 0000 BBBB
+	db 0d4h, 10h		;; aam 16: 0000 AAAA 0000 BBBB
 	xchg AL, AH		;; 0000 BBBB 0000 AAAA
 endif
 	add AX, 3030h
@@ -170,7 +169,6 @@ endif
 ;;	mov DI, [pszDbl]
 
 ;; --- Check for a negative number.
-
 	mov CL, [SI+9]
 	test CL, 80h
 	jz @F
@@ -178,9 +176,7 @@ endif
 	mov AL, '-'				;; store a minus sign
 	stosb
 @@:
-
 ;; --- load our value onto the stack.
-
 	fld tbyte ptr [SI]
 	fld ST
 	mov [SI+9], CL	;; restore fpin, must be preserved.
@@ -192,7 +188,6 @@ endif
 ;;
 ;; The exponent is basically log2(fpin).
 ;; Those of you who remember algebra realize that log2(fpin) x log10(2) = log10(fpin), which is what we want.
-
 	fxtract			;; ST=> mantissa, exponent, fpin
 	fstp ST			;; drop the mantissa
 	fldlg2			;; push log10(2)
@@ -201,7 +196,6 @@ endif
 
 ;; --- A 10-byte double can carry almost 19 digits, but fbstp only stores the guaranteed 18.
 ;; --- If you're doing 10-byte doubles, change the '16' to '18'.
-
 	cmp IExp, 18
 	jnc notbelow18
 
@@ -220,7 +214,6 @@ endif
 ;; --- We have an integer!
 ;; --- Lucky day.
 ;; --- Go convert it into a temp buffer.
-
 	push DI
 ;;	lea DI, szTemp
 	call FloatToBCD
@@ -236,30 +229,24 @@ endif
 
 ;; --- The off-by-one order of magnitude problem below can hit us here.
 ;; --- We just trim off the possible leading zero.
-
 	cmp byte ptr [SI], '0'
 	jnz @F
 	inc SI
 	dec CX
 @@:
-
 ;; --- Copy the rest of the converted BCD value to our buffer.
-
 	rep movsb
 	jmp ftsExit
 
 notequal:
 notbelow18:
-
 ;; --- Have fbstp round to 17 places.
-
 	mov AX, MAXNUM
 	sub AX, IExp		;; adjust exponent to 17
 	call PowerOf10
 
 ;; Either we have exactly 17 digits, or we have exactly 16 digits.
 ;; We can detect that condition and adjust now.
-
 	fcom qword ptr [ten_16]
 	;; x0xxxx00 means top of stack > ten16
 	;; x0xxxx01 means top of stack < ten16
@@ -275,11 +262,9 @@ endif
 	fmul qword ptr [ten_1]
 	dec IExp
 @@:
-
 ;; --- Go convert to BCD.
-
 	push DI
-	lea  DI, [DI+8]
+	lea DI, [DI+8]
 	call FloatToBCD
 	pop DI
 
@@ -287,7 +272,6 @@ endif
 	lea SI, [DI+8+1]		;; point to converted buffer
 
 ;; --- If the exponent is between -15 and 16, we should express this as a number without scientific notation.
-
 	mov CX, [IExp]
 	push CX
 	add CX, MAXNUM-1
@@ -297,7 +281,6 @@ endif
 
 ;; If the exponent is less than zero, we insert '0.', then -ECX leading zeros, then 16 digits of mantissa.
 ;; If the exponent is positive, we copy ECX+1 digits, then a decimal point (maybe), then the remaining 16-ECX digits.
-
 	inc CX
 	cmp CX, 0
 	jg @F
@@ -318,28 +301,22 @@ fts3:
 	rep movsb
 
 ;; --- Trim off trailing zeros.
-
 @@:
 	cmp byte ptr [DI-1], '0'
 	jnz @F
 	dec DI
 	jmp @B
 @@:
-
 ;; --- If we cleared out all the decimal digits, kill the decimal point, too.
-
 	cmp byte ptr [DI-1], '.'
 	jnz @F
 	dec DI
 @@:
-
 ;; --- That's it.
-
 	jmp ftsExit
 fts6:
 ;; Now convert this to a standard, usable format.
 ;; If needed, a minus sign is already present in the outgoing buffer, and DI already points past it.
-
 	movsb				;; copy the first digit
 	mov AL, '.'
 	stosb				;; plop in a decimal point
@@ -348,11 +325,9 @@ fts6:
 	movsw				;; copy two more digits
 
 if 0
-
 ;; The printf %g specified trims off trailing zeros here.
 ;; I dislike this, so I've disabled it.
 ;; Comment out the if 0 and endif if you want this.
-
 @@:
 	cmp byte ptr [DI-1], '0'
 	jz @F
@@ -363,7 +338,6 @@ endif
 
 ;; --- Shove in the exponent.
 ;; --- If you support 10-byte reals, remember to allow 4 digits for the exponent.
-
 	mov AX, '+e'
 	mov DX, [IExp]
 	and DX, DX

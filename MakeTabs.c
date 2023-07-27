@@ -785,7 +785,11 @@ int main(void) {
          }
          if (strcmp(S, NameTab[K]) == 0) break;
       }
-      KeyDict[KeyN].Value = K, KeyDict[KeyN].Width = strstr(S, "OpX") != NULL? 2: strstr(S, "_rx") != NULL? 8: 1;
+      KeyDict[KeyN].Value = K,
+      KeyDict[KeyN].Width =
+        strstr(S, "_Ax") != NULL || strstr(S, "_Ex") != NULL || strstr(S, "_Ix") != NULL ||
+        strstr(S, "_Ox") != NULL || strstr(S, "_Rx") != NULL? 2:
+        strstr(S, "_rb") != NULL || strstr(S, "_rv") != NULL || strstr(S, "_rw") != NULL || strstr(S, "_rd") != NULL? 8: 1;
       KeyN++;
    }
    fclose(KeyF);
